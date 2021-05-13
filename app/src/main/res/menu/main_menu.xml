@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/d_menu_item"
+        android:icon="@drawable/ic_more_vert_black_24dp"
+        android:title="@string/main_menu"
+        android:theme="@style/AppTheme"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/athlete_details"
+                android:title="@string/athlete_details"
+                android:icon="@drawable/ic_person_black_24dp"/>
+            <item
+                android:id="@+id/strava_login"
+                android:title="@string/strava_login"
+                android:icon="@drawable/strava_icon"/>
+            <item
+                android:id="@+id/sync_today"
+                android:title="@string/sync_today"
+                android:icon="@drawable/ic_sync_black_24dp"/>
+        </menu>
+    </item>
+</menu>

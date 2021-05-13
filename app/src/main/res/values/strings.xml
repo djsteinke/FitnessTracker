@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Fitness Tracker</string>
+    <string name="main_menu">Main Menu</string>
+    <string name="strava_login">Strava Login</string>
+    <string name="athlete_details">Athlete Details</string>
+    <string name="sync_today">Sync Today</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <string name="ftp_c">FTP:</string>
+    <string name="hr_max">HR Max:</string>
+    <string name="hr_rest">HR Rest:</string>
+
+    <string name="pss">PSS:</string>
+    <string name="hrss">HRSS:</string>
+    <string name="fitness">Fitness:</string>
+    <string name="fatigue">Fatigue:</string>
+    <string name="form">Form:</string>
+    <string name="date">Date:</string>
+    <string name="effective_date">Effective Date</string>
+    <string name="hrr">Resting HR</string>
+    <string name="hrm">Max HR</string>
+    <string name="ftp">FTP</string>
+
+    <string name="date_format">YYYY-MM-DD</string>
+
+    <string-array name="spinner_values">
+        <item>30 days</item>
+        <item>6 weeks</item>
+        <item>2 months</item>
+        <item>3 months</item>
+        <item>4 months</item>
+        <item>5 months</item>
+        <item>6 months</item>
+    </string-array>
+</resources>
