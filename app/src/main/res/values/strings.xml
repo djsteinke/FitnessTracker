@@ -12,6 +12,7 @@
     <string name="hr_max">HR Max:</string>
     <string name="hr_rest">HR Rest:</string>
 
+    <string name="add">Add</string>
     <string name="pss">PSS:</string>
     <string name="hrss">HRSS:</string>
     <string name="fitness">Fitness:</string>
@@ -22,6 +23,7 @@
     <string name="hrr">Resting HR</string>
     <string name="hrm">Max HR</string>
     <string name="ftp">FTP</string>
+    <string name="auto_generated">Auto Generated</string>
 
     <string name="date_format">YYYY-MM-DD</string>
 

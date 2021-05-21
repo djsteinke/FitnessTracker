@@ -3,19 +3,33 @@ package com.rn5.fitnesstracker.model;
 import android.util.Log;
 import android.util.LongSparseArray;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.rn5.fitnesstracker.define.Json;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import static com.rn5.fitnesstracker.activity.MainActivity.fitnessArray;
+import static com.rn5.fitnesstracker.activity.MainActivity.getDaysTo;
 import static com.rn5.fitnesstracker.define.Constants.APP_FILE_PATH;
+import static com.rn5.fitnesstracker.define.Constants.getObjectFromJsonString;
+import static com.rn5.fitnesstracker.define.Constants.loadFile;
+import static com.rn5.fitnesstracker.define.Constants.saveFile;
+import static java.util.Arrays.asList;
 
 @lombok.Data
 public class AthleteData {
@@ -24,41 +38,13 @@ public class AthleteData {
     private Long lastUpdateTime;
     private Integer age;
     private List<AthleteDetail> detailList = new ArrayList<>();
-    private LongSparseArray<StravaActivity> activityList = new LongSparseArray<>();
-    private LongSparseArray<Fitness> fitnessList = new LongSparseArray<>();
+    private List<StravaActivity> activityList = new ArrayList<>();
+    private List<Fitness> fitnessList = new ArrayList<>();
+    private List<Ftp> ftpList = new ArrayList<>();
 
     private static final String FILE_NAME = "AthleteData.json";
 
-    public AthleteData() {
-        try {
-            JSONObject object = Json.loadJSONFromFile(APP_FILE_PATH,FILE_NAME);
-            if (object != null) {
-                this.age = Json.getJSONInt(object, "age", null);
-
-                Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
-                gmtDate.add(Calendar.DATE,-30);
-                this.lastUpdateTime = Json.getJSONLong(object, "last_update_time", gmtDate.getTimeInMillis());
-                JSONArray ftpArray = object.getJSONArray("athleteDetails");
-                for (int i=0;i<ftpArray.length();i++) {
-                    addAthleteDetail(new AthleteDetail(ftpArray.getJSONObject(i)));
-                }
-                JSONArray activityArray = object.getJSONArray("activityArray");
-                for (int i=0;i<activityArray.length();i++) {
-                    StravaActivity stravaActivity = new StravaActivity(activityArray.getJSONObject(i));
-                    //Log.d(TAG,"StravaActivity[" + stravaActivity.getId() + "]");
-                    activityList.put(stravaActivity.getId(),stravaActivity);
-                }
-                JSONArray fitnessArray = object.getJSONArray("fitnessArray");
-                for (int i=0;i<fitnessArray.length();i++) {
-                    Fitness fitness = new Fitness(fitnessArray.getJSONObject(i));
-                    //Log.d(TAG,"Fitness[" + fitness.getId() + "]");
-                    fitnessList.put(fitness.getId(),fitness);
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG,"CREATE FAILED : " + e.getMessage());
-        }
-    }
+    public AthleteData() {}
 
     public void addAthleteDetail(AthleteDetail athleteDetail) {
         int i = 0;
@@ -73,48 +59,85 @@ public class AthleteData {
         this.detailList.add(i, athleteDetail);
     }
 
-    public void removeAthleteDetail(int pos) {
-        detailList.remove(pos);
+    public void updateAthleteDetail(AthleteDetail athleteDetail) {
+        int i = 0;
+        for (AthleteDetail d : detailList) {
+            if (d.getId() == athleteDetail.getId()) {
+                break;
+            }
+            i++;
+        }
+        detailList.set(i, athleteDetail);
+    }
+
+    public void removeAthleteDetail(AthleteDetail athleteDetail) {
+        int i = 0;
+        for (AthleteDetail d : detailList) {
+            if (d == athleteDetail) {
+                detailList.remove(i);
+                break;
+            }
+            i++;
+        }
+    }
+
+    public void updateFitnessList() {
+        List<Fitness> list = new ArrayList<>();
+        for(int i = 0; i < fitnessArray.size(); i++) {
+            long key = fitnessArray.keyAt(i);
+            Fitness obj = fitnessArray.get(key);
+            list.add(obj);
+        }
+        this.fitnessList = list;
     }
 
     public void save() {
         try {
-            JSONObject object = this.toJson();
-            Json.saveJSONToFile(APP_FILE_PATH, FILE_NAME, object);
-        } catch (IOException | JSONException e) {
+            Gson gson = new GsonBuilder().create();
+            String val = gson.toJson(this);
+            saveFile(APP_FILE_PATH, FILE_NAME, val);
+        } catch (IOException e) {
             Log.e("AthleteData","SAVE FAILED : " + e.getMessage());
         }
     }
 
-    private JSONObject toJson() throws JSONException {
-        JSONObject object = new JSONObject();
-        object.put("age",age);
-        object.put("last_update_time",lastUpdateTime);
-
-        JSONArray detailsArray = new JSONArray();
-        for (AthleteDetail athleteDetail : detailList) {
-            detailsArray.put(athleteDetail.toJson());
+    public static AthleteData loadFromFile() {
+        try {
+            String val = loadFile(APP_FILE_PATH, FILE_NAME);
+            return getObjectFromJsonString(val, AthleteData.class);
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "loadFromFile() FileNotFoundException");
+            AthleteData data = new AthleteData();
+            Calendar c = Calendar.getInstance();
+            c.add(Calendar.YEAR, -1);
+            data.getDetailList().add(new AthleteDetail(100, 182, 65, getDaysTo(c), getDaysTo(c)));
+            return data;
+        } catch (Exception e) {
+            return null;
         }
-        object.put("athleteDetails",detailsArray);
-
-        JSONArray activityArray = new JSONArray();
-
-        for (int i=0;i<activityList.size();i++) {
-            long key = activityList.keyAt(i);
-            StravaActivity activity = activityList.get(key);
-            activityArray.put(activity.toJson());
-        }
-        object.put("activityArray",activityArray);
-
-        JSONArray fitnessArray = new JSONArray();
-        for (int i=0;i<fitnessList.size();i++) {
-            long key = fitnessList.keyAt(i);
-            Fitness fitness = fitnessList.get(key);
-            fitness.setId(key);
-            fitnessArray.put(fitness.toJson());
-        }
-        object.put("fitnessArray",fitnessArray);
-
-        return object;
     }
+
+    @Getter
+    @Setter
+    public static class Ftp {
+        int ftp;
+        int hr;
+        long date;
+
+        public Ftp() {}
+        public Ftp withFtp(int ftp) {
+            this.ftp = ftp;
+            return this;
+        }
+        public Ftp withHr(int hr) {
+            this.hr = hr;
+            return this;
+        }
+        public Ftp withDate(long dt) {
+            this.date = dt;
+            return this;
+        }
+
+    }
+
 }

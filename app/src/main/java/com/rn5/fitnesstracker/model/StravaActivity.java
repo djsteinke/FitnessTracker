@@ -1,39 +1,41 @@
 package com.rn5.fitnesstracker.model;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.Data;
-
-@Data
+@Getter
+@Setter
 public class StravaActivity {
-    private Long id;
+    private final long id;
     private Integer ftpEffort;
     private Integer hrEffort;
     private Long date;
 
-    public StravaActivity() {}
-
-    public StravaActivity(Long id, Integer ftpEffort, Integer hrEffort, Long date) {
+    public StravaActivity(long id) {
         this.id = id;
+    }
+    public StravaActivity withFtpEffort(Integer ftpEffort) {
         this.ftpEffort = ftpEffort;
+        return this;
+    }
+    public StravaActivity withHrEffort(Integer hrEffort) {
         this.hrEffort = hrEffort;
+        return this;
+    }
+    public StravaActivity withDate(Long date) {
         this.date = date;
+        return this;
     }
 
-    public StravaActivity(JSONObject object) throws JSONException {
-        this.id = object.getLong("id");
-        this.ftpEffort = object.getInt("ftpEffort");
-        this.hrEffort = object.getInt("hrEffort");
-        this.date = Long.parseLong(object.getString("date"));
-    }
-
-    public JSONObject toJson() throws JSONException {
-        JSONObject object = new JSONObject();
-        object.put("id",id);
-        object.put("ftpEffort",ftpEffort);
-        object.put("hrEffort",hrEffort);
-        object.put("date",date);
-        return object;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof StravaActivity)) {
+            return false;
+        }
+        StravaActivity c = (StravaActivity) o;
+        return id == c.id;
     }
 }

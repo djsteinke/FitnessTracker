@@ -1,5 +1,6 @@
 package com.rn5.fitnesstracker.define;
 
+import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,13 +17,14 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.athleteData;
 import static com.rn5.fitnesstracker.activity.MainActivity.dayInMS;
 import static com.rn5.fitnesstracker.define.Constants.sdfDate;
 
-public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetailsListAdapter.MyViewHolder> {
+public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetailsListAdapter.MyViewHolder> implements AthleteDetailsListener {
     private static final String TAG = AthleteDetailsListAdapter.class.getSimpleName();
     private static List<AthleteDetail> mDataset = new ArrayList<>();
+    private final Context context;
+    private final AthleteDetailsListener listener;
 
 
     // Provide a reference to the views for each data item
@@ -39,8 +41,10 @@ public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetai
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public AthleteDetailsListAdapter(List<AthleteDetail> inDataset) {
+    public AthleteDetailsListAdapter(Context context, List<AthleteDetail> inDataset) {
+        this.context = context;
         mDataset = inDataset;
+        listener = this;
     }
 
     // Create new views (invoked by the layout manager)
@@ -63,24 +67,28 @@ public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetai
         // - replace the contents of the view with that element
         Log.d(TAG,"onBindViewHolder() [" + position + "]");
         final View vItem = holder.vItem;
-        vItem.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                athleteData.removeAthleteDetail(position);
-                athleteData.save();
-                notifyDataSetChanged();
-                return false;
-            }
+        vItem.setOnLongClickListener(view -> {
+            AthleteDetailsAlert alert = new AthleteDetailsAlert(context, listener);
+            alert.withAthleteDetails(position)
+                    .delete();
+            return false;
+        });
+        vItem.setOnClickListener(view -> {
+            AthleteDetailsAlert alert = new AthleteDetailsAlert(context, listener);
+            alert.withAthleteDetails(position)
+                    .show();
         });
         TextView date = vItem.findViewById(R.id.date_value);
         TextView ftp = vItem.findViewById(R.id.ftp_value);
         TextView hrMin = vItem.findViewById(R.id.hr_min_value);
         TextView hrMax = vItem.findViewById(R.id.hr_max_value);
+        TextView auto = vItem.findViewById(R.id.auto_value);
 
         Calendar c = Calendar.getInstance();
         long dtMillis = mDataset.get(position).getDate() * dayInMS - c.getTimeZone().getRawOffset();
         c.setTimeInMillis(dtMillis);
-        //Log.d(TAG,"Millis [" + dtMillis + "] Date [" + sdf.format(c.getTime()) +"]" + "rawOffset [" + c.getTimeZone().getRawOffset() + "]");
+
+        auto.setText(mDataset.get(position).isAuto()?"Auto":"");
 
         date.setText(sdfDate.format(c.getTime()));
         ftp.setText(String.valueOf(mDataset.get(position).getFtp()));
@@ -97,5 +105,10 @@ public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetai
     @Override
     public int getItemCount() {
         return mDataset.size();
+    }
+
+    @Override
+    public void onAthleteDetailsUpdate() {
+        notifyDataSetChanged();
     }
 }

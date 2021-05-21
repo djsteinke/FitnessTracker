@@ -17,7 +17,7 @@ public class Fitness {
     private Double fatigue;
     private Double form;
     private Long date;
-    private Long id;
+    private long id;
 
     public Fitness() {}
 
@@ -28,28 +28,19 @@ public class Fitness {
         this.fatigue = fatigue;
         this.form = form;
         this.date = date;
+        this.id = date;
     }
 
-    public Fitness(JSONObject object) throws JSONException {
-        this.stressScore = Json.getJSONInt(object,"stressScore",0);
-        this.hrStressScore = Json.getJSONInt(object,"hrStressScore",0);
-        this.fitness = Json.getJSONDouble(object,"fitness",0d);
-        this.fatigue = Json.getJSONDouble(object,"fatigue",0d);
-        this.form = Json.getJSONDouble(object,"form",0d);
-        this.date = Json.getJSONLong(object,"date",0L);
-        this.id = Json.getJSONLong(object,"id",0L);
-    }
-
-    public JSONObject toJson() throws JSONException {
-        JSONObject object = new JSONObject();
-        object.put("hrStressScore",hrStressScore);
-        object.put("stressScore",stressScore);
-        object.put("fitness",fitness);
-        object.put("fatigue",fatigue);
-        object.put("form",form);
-        object.put("date",date);
-        object.put("id",id);
-        return object;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Fitness)) {
+            return false;
+        }
+        Fitness c = (Fitness) o;
+        return id == c.id;
     }
 
 }

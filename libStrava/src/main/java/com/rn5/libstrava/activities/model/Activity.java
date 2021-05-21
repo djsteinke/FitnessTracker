@@ -3,9 +3,12 @@ package com.rn5.libstrava.activities.model;
 import com.google.gson.annotations.SerializedName;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-public class Activity {
+@Getter
+@Setter
+public class Activity implements Comparable<Activity> {
 
     @SerializedName("name") private String name;
     @SerializedName("id") private Long id;
@@ -16,4 +19,9 @@ public class Activity {
     @SerializedName("moving_time") private Integer movingTime;
 
     public Activity() {}
+
+    @Override
+    public int compareTo(Activity o) {
+        return this.getId().compareTo(o.getId());
+    }
 }

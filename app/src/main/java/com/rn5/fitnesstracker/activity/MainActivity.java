@@ -5,7 +5,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -27,25 +26,25 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.async.StravaActivitiesAsync;
 import com.rn5.fitnesstracker.async.StravaAuthenticationAsync;
 import com.rn5.fitnesstracker.define.EventListener;
 import com.rn5.fitnesstracker.define.FitnessListAdapter;
+import com.rn5.fitnesstracker.executor.StravaActivitiesExecutor;
+import com.rn5.fitnesstracker.executor.StravaAuthenticationExecutor;
 import com.rn5.fitnesstracker.model.AthleteData;
 import com.rn5.fitnesstracker.model.Fitness;
 import com.rn5.fitnesstracker.model.StravaActivity;
 import com.rn5.fitnesstracker.model.StravaToken;
-import com.rn5.libstrava.activities.model.Activities;
 import com.rn5.libstrava.authentication.model.AuthenticationType;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -58,27 +57,24 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     public static AthleteData athleteData;
 
-    private Button request;
-    private Button calcFitness;
     private ImageView ivFitnessCurve;
     private int fcW;
     private int fcH;
-    private int sW;
-    private int sH;
-    private long lUtcOffset;
     public static boolean bDarkMode = false;
     private int graphDays = 42;
     private boolean bReadyToDraw = false;
     private DisplayMetrics displayMetrics;
 
-    public static Activities activities;
-
     public static final int dayInMS = 86400000;
-    private List<Fitness> rvaDataset = new ArrayList<>();
+    private final List<Fitness> rvaDataset = new ArrayList<>();
+    private FitnessListAdapter rvAdapter;
 
-    private RecyclerView rvFitness;
-    private RecyclerView.Adapter rvAdapter;
-    private RecyclerView.LayoutManager layoutManager;
+    public static LongSparseArray<StravaActivity> activityArray = new LongSparseArray<>();
+    public static LongSparseArray<Fitness> fitnessArray = new LongSparseArray<>();
+
+    public static final int menu_strava_login = R.id.strava_login;
+    public static final int menu_athlete_details = R.id.athlete_details;
+    public static final int menu_sync_today = R.id.sync_today;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,18 +83,17 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
         setFilePath();
         STRAVA_TOKEN = new StravaToken().fromFile();
-        athleteData = new AthleteData();
-        activities = new Activities();
+        athleteData = AthleteData.loadFromFile();
+        processAthleteData(true);
 
         int nightModeFlags = this.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         bDarkMode = (nightModeFlags == Configuration.UI_MODE_NIGHT_YES);
 
         displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        sW = displayMetrics.widthPixels;
         bReadyToDraw = false;
 
-        rvFitness = findViewById(R.id.recyclerView);
+        RecyclerView rvFitness = findViewById(R.id.recyclerView);
         ivFitnessCurve = findViewById(R.id.fitness_curves);
         ViewTreeObserver vtoPv = ivFitnessCurve.getViewTreeObserver();
         vtoPv.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -113,25 +108,17 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             }
         });
 
-        request = findViewById(R.id.button);
-        request.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                athleteData.setLastUpdateTime(athleteData.getLastUpdateTime()-dayInMS);
-                syncActivities();
-            }
+        Button request = findViewById(R.id.button);
+        request.setOnClickListener(view -> {
+            athleteData.setLastUpdateTime(athleteData.getLastUpdateTime()-dayInMS);
+            syncActivities();
         });
 
-        calcFitness = findViewById(R.id.calcFitness);
-        calcFitness.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                calculateFitness();
-            }
-        });
+        Button calcFitness = findViewById(R.id.calcFitness);
+        calcFitness.setOnClickListener(view -> calculateFitness());
 
         rvFitness.setHasFixedSize(true);
-        layoutManager = new LinearLayoutManager(this);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         rvFitness.setLayoutManager(layoutManager);
 
         // specify an adapter (see also next example)
@@ -140,9 +127,9 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         rvFitness.setAdapter(rvAdapter);
 
         Spinner spinner = findViewById(R.id.spinner);
-        ArrayAdapter sAdapter = ArrayAdapter.createFromResource(this,
+        SpinnerAdapter sAdapter = ArrayAdapter.createFromResource(this,
                 R.array.spinner_values, android.R.layout.simple_spinner_item);
-        sAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        //sAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(sAdapter);
         spinner.setSelection(1);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -160,13 +147,27 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         });
     }
 
+    private void processAthleteData(boolean both) {
+        activityArray = new LongSparseArray<>();
+        for (StravaActivity activity : athleteData.getActivityList())
+            activityArray.put(activity.getId(), activity);
+        if (both) {
+            fitnessArray = new LongSparseArray<>();
+            for (Fitness fitness : athleteData.getFitnessList())
+                fitnessArray.put(fitness.getId(), fitness);
+        }
+    }
+
     private void calculateFitness() {
         Log.d(TAG,"calcFitness pressed");
 
+        /*
         if (athleteData.getFitnessList() == null || athleteData.getFitnessList().size() == 0) {
             LongSparseArray<Fitness> newArray = new LongSparseArray<>();
             athleteData.setFitnessList(newArray);
         }
+
+         */
 
         int fDays = 7;
         int aDays = 180;
@@ -183,19 +184,21 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         long dayBeforeLastUpdate = getDaysTo(date);
         //for (Map.Entry<Long,StravaActivity> entry : athleteData.getActivityList().entrySet()) {
         long lastDt = 0;
-        for (int i=0;i<athleteData.getActivityList().size();i++) {
+        Calendar c = Calendar.getInstance();
+        for (int i=0;i<activityArray.size();i++) {
         //for (int i=aDays;i>-1;i--) {
           //  long key = today-i;
-            long key = athleteData.getActivityList().keyAt(i);
-            StravaActivity activity = athleteData.getActivityList().get(key);
+            long key = activityArray.keyAt(i);
+            StravaActivity activity = activityArray.get(key);
             //Log.d(TAG,"StravaActivity ID[" + entry.getValue().getId() + "]");
-            long dt = (int) (activity.getDate()/ dayInMS);
+            c.setTimeInMillis(activity.getDate());
+            //long dt = (int) (activity.getDate()/ dayInMS);
+            long dt = getDaysTo(c);
             if (dt > dayBeforeLastUpdate) {
                 if (dt != lastDt)
-                    athleteData.getFitnessList().put(dt,null);
-                if (athleteData.getFitnessList().get(dt, null) != null) {
-                    //if (athleteData.getFitnessList().containsKey(dt)) {
-                    Fitness fitness = athleteData.getFitnessList().get(dt);
+                    fitnessArray.put(dt,null);
+                if (fitnessArray.get(dt, null) != null) {
+                    Fitness fitness = fitnessArray.get(dt);
                     if (fitness != null) {
                         Integer ss = fitness.getStressScore();
                         Integer hrss = fitness.getHrStressScore();
@@ -203,10 +206,12 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                         hrss += activity.getHrEffort();
                         fitness.setStressScore(ss);
                         fitness.setHrStressScore(hrss);
+                        fitnessArray.put(dt, fitness);
                     }
                 } else {
                     Fitness fitness = new Fitness(activity.getFtpEffort(), activity.getHrEffort(), 0d, 0d, 0d, dt);
-                    athleteData.getFitnessList().put(dt, fitness);
+                    athleteData.getFitnessList().add(fitness);
+                    fitnessArray.put(dt, fitness);
                 }
             }
             lastDt = dt;
@@ -214,9 +219,9 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         Double dFit = 0d;
         Double dFat = 0d;
 
-        if (athleteData.getFitnessList().get(dayBeforeLastUpdate,null) != null) {
+        if (fitnessArray.get(dayBeforeLastUpdate,null) != null) {
         //if (athleteData.getFitnessList().containsKey(today)) {
-            Fitness fitness = athleteData.getFitnessList().get(dayBeforeLastUpdate);
+            Fitness fitness = fitnessArray.get(dayBeforeLastUpdate);
             if (fitness != null) {
                 Log.d(TAG,"calculateFitness() get previous fitness [" + dayBeforeLastUpdate + "]");
                 dFit = fitness.getFitness();
@@ -229,9 +234,9 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             //Log.d(TAG,"today[" + dt + "] i[" + i + "]");
             int pss = 0;
             int hrss = 0;
-            if (athleteData.getFitnessList().get(dt,null) != null) {
+            if (fitnessArray.get(dt,null) != null) {
             //if (athleteData.getFitnessList().containsKey(dt)) {
-                Fitness fitness = athleteData.getFitnessList().get(dt);
+                Fitness fitness = fitnessArray.get(dt);
                 if (fitness != null) {
                     pss = fitness.getStressScore();
                     hrss = fitness.getHrStressScore();
@@ -240,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             Double fit = dFit + (pss - dFit) * (1 - Math.exp((-1d / 42d)));
             Double fatigue = dFat + (pss - dFat) * (1 - Math.exp((-1d / 7d)));
             Fitness fitness = new Fitness(pss,hrss,fit,fatigue,dFit-dFat, dt);
-            athleteData.getFitnessList().put(dt,fitness);
+            fitnessArray.put(dt,fitness);
             dFit = fit;
             dFat = fatigue;
             /*else {
@@ -255,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
              */
         }
+        athleteData.updateFitnessList();
         athleteData.save();
         setDataset();
         drawFitnessCurves();
@@ -283,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             double dMinVal = 0d;
             for (int i = (int) aDays + 1; i > -1; i--) {
                 long dt = today - i;
-                Fitness fitness = athleteData.getFitnessList().get(dt);
+                Fitness fitness = fitnessArray.get(dt);
                 if (fitness != null) {
                     Double dFit = fitness.getFitness();
                     Double dFat = fitness.getFatigue();
@@ -345,7 +351,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
             // Form Zones horizontal lines
             int dashCnt = 43;
-            float dashW = (fcW - xMargin) / dashCnt;
+            float dashW = (fcW - xMargin) / (float) dashCnt;
             for (float val : formZones) {
                 hLine = new Path();
                 hLine.moveTo(xMarginL, y0 - val / 10f * h10);
@@ -361,33 +367,9 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                 fitnessCurves.drawPath(hLine, paintS);
             }
 
-
-            List<Float> xAct = new ArrayList<>();
-
             Path ftLine = new Path();
             Path fgLine = new Path();
             Path fmLine = new Path();
-            //Log.d(TAG,"today[" + today + "]");
-
-
-            // Draw MONDAY vertical lines
-            //Calendar c = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
-        /*
-        Calendar c = Calendar.getInstance();
-        c.add(Calendar.DATE,(int)fDays);
-        SimpleDateFormat cSdf = new SimpleDateFormat("u", Locale.US);
-        float fY1 = (float) iZero * h10 + h10/3f;
-        float fY2 = (float) iZero * h10 - h10/3f;
-        for (int i=(int)(aDays+fDays);i>0;i--) {
-            if (cSdf.format(c.getTime()).equals("1")) {
-                Path tdLine = new Path();
-                tdLine.moveTo(xMarginL + (int) (i * xD),fY1);
-                tdLine.lineTo(xMarginL + (int) (i * xD),fY2);
-                fitnessCurves.drawPath(tdLine,paintS);
-            }
-            c.add(Calendar.DATE,-1);
-        }
-        */
 
             float fY1 = (float) iZero * h10 + fcH / 45f;
             float fY2 = (float) iZero * h10 - fcH / 45f;
@@ -403,9 +385,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             float yFmP = 0.0f;
             c.add(Calendar.DATE, (int) fDays);
             for (int i = (int) days; i > -1; i--) {
-                //long dt = (today+(int)fDays)-i;
-                long dt = getDaysTo(a); //a.getTimeInMillis()/dayInMS;
-                //Log.d(TAG,"dt [" + dt + "]");
+                long dt = getDaysTo(a);
 
                 float x = xMarginL + (int) ((days - i) * xD);
                 // TODAY vertical line
@@ -414,25 +394,18 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                     tdLine.moveTo(x, 0);
                     tdLine.lineTo(x, fcH);
                     fitnessCurves.drawPath(tdLine, paintG);
-                    //Log.d(TAG,"Today [" + dt + "]");
                 }
 
                 // MONDAY vertical lines
                 if (a.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
                     Path tdLine = new Path();
-                    //tdLine.moveTo(xMarginL + (int) ((i * xD) - xD/2f),fY1);
-                    //tdLine.lineTo(xMarginL + (int) ((i * xD) - xD/2f),fY2);
                     tdLine.moveTo((x - xD / 2f), fY1);
                     tdLine.lineTo((x - xD / 2f), fY2);
                     fitnessCurves.drawPath(tdLine, paintS);
                 }
 
-                //Log.d(TAG,"dt[" + dt + "]");
-                Fitness fitness = athleteData.getFitnessList().get(dt);
+                Fitness fitness = fitnessArray.get(dt);
                 if (fitness != null) {
-                    //Log.d(TAG,"fitness[" + fitness.getFitness() + "]");
-                    //Log.d(TAG,"fatigue[" + fitness.getFatigue() + "]");
-                    //Log.d(TAG,"form[" + fitness.getForm() + "]");
                     float yFt = (float) (y0 - (fitness.getFitness() / 10.0 * h10));
                     float yFg = (float) (y0 - (fitness.getFatigue() / 10.0 * h10));
                     float yFm = (float) (y0 - (fitness.getForm() / 10.0 * h10));
@@ -466,10 +439,8 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                     yFmP = yFm;
 
                     if (fitness.getStressScore() != null && fitness.getStressScore() > 0) {
-                        //xAct.add(x);
                         paintS.setAlpha(255);
                         fitnessCurves.drawCircle(x, (float) y0, 4, paintS);
-                        //Log.d(TAG,"fitness.date [" + fitness.getDate() + "]");
                     }
                 } else {
                     Log.d(TAG, "fitness is null");
@@ -487,21 +458,6 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             paintF.setStrokeWidth(getPxFromDp(1.5f));
             fitnessCurves.drawPath(ftLine, paintF);
 
-        /*
-        hLine = new Path();
-        hLine.moveTo(xMargin,(float)y0);
-        hLine.lineTo(fcW-xMargin,(float)y0);
-        hLine.close();
-        fitnessCurves.drawPath(hLine,paintS);
-        */
-        /*
-        paintS.setStyle(Paint.Style.FILL_AND_STROKE);
-        paintS.setStrokeWidth(1.0f);
-        paintS.setAlpha(255);
-        for (float xVal : xAct) {
-            fitnessCurves.drawCircle(xVal,(float)y0,4,paintS);
-        }
-         */
             ivFitnessCurve.setImageBitmap(bitmap);
         }
     }
@@ -527,14 +483,14 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
     public void setDataset() {
         long today = getDaysTo(Calendar.getInstance());
-        for (int i=0;i<athleteData.getFitnessList().size();i++) {
-            long key = athleteData.getFitnessList().keyAt(i);
-            if (key == today || key == today+1 || (key < today && athleteData.getFitnessList().get(key).getStressScore() > 0)) {
-                int fitIndex = getFitIndex(athleteData.getFitnessList().get(key));
+        for (int i=0;i<fitnessArray.size();i++) {
+            long key = fitnessArray.keyAt(i);
+            if (key == today || key == today+1 || (key < today && fitnessArray.get(key).getStressScore() > 0)) {
+                int fitIndex = getFitIndex(fitnessArray.get(key));
                 if (fitIndex >= 0) {
-                    rvaDataset.set(fitIndex,athleteData.getFitnessList().get(key));
+                    rvaDataset.set(fitIndex,fitnessArray.get(key));
                 } else {
-                    rvaDataset.add(0, athleteData.getFitnessList().get(key));
+                    rvaDataset.add(0, fitnessArray.get(key));
                 }
             }
         }
@@ -561,18 +517,14 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, displayMetrics);
     }
 
-    private long getOffsetFromGMT() {
-        TimeZone tz = TimeZone.getDefault();
-        Date now = new Date();
-        return tz.getOffset(now.getTime()) / 1000;
-    }
-
     private void syncActivities() {
         Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
         long nextUpdate = gmtDate.getTimeInMillis() - (5*60*1000);
         if (athleteData.getLastUpdateTime() == null || athleteData.getLastUpdateTime() < nextUpdate) {
-            StravaActivitiesAsync async = new StravaActivitiesAsync(this);
-            async.execute("na");
+            StravaActivitiesExecutor executor = new StravaActivitiesExecutor(this);
+            executor.run();
+            //StravaActivitiesAsync async = new StravaActivitiesAsync(this);
+            //async.execute("na");
         }
     }
 
@@ -584,6 +536,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     }
     @Override
     public void onActivitySynced() {
+        processAthleteData(false);
         Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
         Log.d(TAG,"onActivitySynced()");
         Toast.makeText(this,"Activities Synced.",Toast.LENGTH_SHORT).show();
@@ -607,13 +560,14 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     public void onResume() {
         super.onResume();
 
-        lUtcOffset = getOffsetFromGMT();
         if (TOKEN != null) {
             Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
             Log.d(TAG,"expire[" + TOKEN.getExpirationDate() + "] current[" + gmtDate.getTimeInMillis() + "]");
             if (TOKEN.getExpirationDate() < gmtDate.getTimeInMillis()) {
-                StravaAuthenticationAsync stravaAuth = new StravaAuthenticationAsync(AuthenticationType.REFRESH_TOKEN, this);
-                stravaAuth.execute(TOKEN.getRefreshToken());
+                new StravaAuthenticationExecutor(AuthenticationType.REFRESH_TOKEN, this, TOKEN.getRefreshToken()).run();
+
+                //StravaAuthenticationAsync stravaAuth = new StravaAuthenticationAsync(AuthenticationType.REFRESH_TOKEN, this);
+                //stravaAuth.execute(TOKEN.getRefreshToken());
             } else {
                 Log.d(TAG,"syncActivities() TOKEN not expired.");
                 syncActivities();
@@ -637,13 +591,13 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.strava_login:
+            case menu_strava_login:
                 this.startActivity(new Intent(this, StravaLogin.class));
                 break;
-            case R.id.athlete_details:
+            case menu_athlete_details:
                 this.startActivity(new Intent(this, AthleteDetailsActivity.class));
                 break;
-            case R.id.sync_today:
+            case menu_sync_today:
                 Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
                 athleteData.setLastUpdateTime(gmtDate.getTimeInMillis() - dayInMS);
                 syncActivities();
