@@ -11,7 +11,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.os.Bundle;
-import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.LongSparseArray;
@@ -202,14 +201,14 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                     if (fitness != null) {
                         Integer ss = fitness.getStressScore();
                         Integer hrss = fitness.getHrStressScore();
-                        ss += activity.getFtpEffort();
-                        hrss += activity.getHrEffort();
+                        ss += activity.getPss();
+                        hrss += activity.getHrss();
                         fitness.setStressScore(ss);
                         fitness.setHrStressScore(hrss);
                         fitnessArray.put(dt, fitness);
                     }
                 } else {
-                    Fitness fitness = new Fitness(activity.getFtpEffort(), activity.getHrEffort(), 0d, 0d, 0d, dt);
+                    Fitness fitness = new Fitness(activity.getPss(), activity.getHrss(), 0d, 0d, 0d, dt);
                     athlete.getFitnessList().add(fitness);
                     fitnessArray.put(dt, fitness);
                 }

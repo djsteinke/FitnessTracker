@@ -96,7 +96,7 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
                 if (!first)
                     sb.append("\n");
                 String val = tab + sdf.format(act.getDate()) + tab + mToMi(act.getDistance()) + tab + sToTime(act.getMovingTime()) +
-                        "\n" + tab + "AvgP: " + act.getAvgPwr() + tab + "20MaxP: " + act.getAvg20Pwr() + tab + "AvgHr: " + act.getAvgHr();
+                        "\n" + tab + "AvgP: " + act.getPwrAvg() + tab + "20MaxP: " + act.getPwrFtp() + tab + "AvgHr: " + act.getHrAvg();
                 sb.append(val);
                 first = false;
             }

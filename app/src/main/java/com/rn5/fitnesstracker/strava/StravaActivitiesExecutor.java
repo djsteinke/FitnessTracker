@@ -36,9 +36,8 @@ public class StravaActivitiesExecutor {
 
     private static final String TAG = StravaActivitiesExecutor.class.getSimpleName();
     private final EventListener eventListener;
-    private int ftpS = 0;
-    private int ftpL = 0;
     private int hrMax = 0;
+    private int ftpMax = 0;
     private static final int ftpDays = 90;
     private static final int hrDays = 180;
     private final List<Integer> ftpAS = new ArrayList<>();
@@ -79,8 +78,7 @@ public class StravaActivitiesExecutor {
                 for (Activity activity : activities) {
                     ftpAS.clear();
                     ftpAL.clear();
-                    ftpS = 0;
-                    ftpL = 0;
+                    ftpMax = 0;
                     StreamAPI streamAPI = new StreamAPI(config);
                     Stream stream = streamAPI.getStreams(activity.getId()).execute();
 
@@ -98,9 +96,9 @@ public class StravaActivitiesExecutor {
                     Log.d(TAG, athleteDetail.toString());
 
 
-                    double ftp = (double) athleteDetail.getFtp();
-                    double hrm = (double) athleteDetail.getHrm();
-                    double hrr = (double) athleteDetail.getHrr();
+                    double ftp = athleteDetail.getFtp();
+                    double hrm = athleteDetail.getHrm();
+                    double hrr = athleteDetail.getHrr();
 
                     Calendar c = Calendar.getInstance();
                     long dtMillis = athleteDetail.getDate() * dayInMS - c.getTimeZone().getRawOffset();
@@ -180,20 +178,20 @@ public class StravaActivitiesExecutor {
                     }
 
                     StravaActivity stravaActivity = new StravaActivity(activity.getId())
-                            .withFtpEffort(iPSS)
-                            .withHrEffort(iHRSS)
+                            .withPss(iPSS)
+                            .withHrss(iHRSS)
                             .withDate(date.getTime());
-                    stravaActivity.setAvg20Pwr(ftpS);
+                    stravaActivity.setPwrFtp(ftpMax);
                     stravaActivity.setDistance(distance);
                     stravaActivity.setMovingTime(activity.getMovingTime());
-                    stravaActivity.setAvgHr((int) hravg);
-                    stravaActivity.setAvgPwr((int) powAvg);
+                    stravaActivity.setHrAvg((int) hravg);
+                    stravaActivity.setPwrAvg((int) powAvg);
                     stravaActivity.setActivityType(activity.getType());
                     updateList(athlete.getActivityList(), stravaActivity);
-                    Log.e("PSS","PSS[" + pss + "]");
-                    if (ftpS > 0 || ftpL > 0) {
+                    Log.e("PSS","PSS[" + iPSS + "]");
+                    if (ftpMax > 0) {
                         athlete.getFtpList().add(new Ftp()
-                                .withFtp(ftpS)
+                                .withFtp(ftpMax)
                                 .withHr(hrMax)
                                 .withDate(getDaysTo(activityDate)));
                     }
@@ -206,77 +204,77 @@ public class StravaActivitiesExecutor {
     }
 
     private void setCurrentDetail() {
-
         long d = getDaysTo(activityDate);
 
         athlete.getDetailList().sort(Comparator.reverseOrder());
         AthleteDetail tmpAthleteDetail = athlete.getDetailList().get(0);
-        if (d - tmpAthleteDetail.getDate() < ftpDays)
+        if (d - tmpAthleteDetail.getDate() <= ftpDays)
             athleteDetail = tmpAthleteDetail;
         else
             calculateAthleteDetail();
-
-
-        long maxD = 0;
-        for (AthleteDetail detail : athlete.getDetailList()) {
-            if (detail.getDate() <= d && detail.getDate() > maxD) {
-                maxD = detail.getDate();
-            }
-        }
-        if (maxD > 0) {
-            for (AthleteDetail detail : athlete.getDetailList()) {
-                if (detail.getDate() == maxD) {
-                    athleteDetail = detail;
-                    return;
-                }
-            }
-        }
-        athleteDetail = new AthleteDetail(100,182,65, d, d);
     }
 
     private void calculateAthleteDetail() {
-
-    }
-
-    private void checkFtp() {
-        int ftpDays = 90;
-        int hrDays = 180;
         long millis = activityDate.getTimeInMillis();
         Calendar ftpC = Calendar.getInstance();
         ftpC.setTimeInMillis(millis);
         ftpC.add(Calendar.DATE, -ftpDays);
+        long ftpD = getDaysTo(ftpC);
+
+        int maxFtp = 150;
+        int maxHr = determineMaxHR();
+        int restHr = 65;
+        long maxFtpDt = getDaysTo(activityDate);
+
+        for (Ftp f : athlete.getFtpList()) {
+            if (f.getDate() >= ftpD && maxFtp < f.getFtp()) {
+                maxFtp = f.getFtp();
+                maxFtpDt = f.getDate();
+            }
+        }
+
+        athleteDetail = new AthleteDetail(maxFtp, maxHr, restHr, maxFtpDt, maxFtpDt);
+        updateList(athlete.getDetailList(), athleteDetail);
+    }
+
+    private int determineMaxHR() {
+        int birthYear = 1983;
+        Calendar c = Calendar.getInstance();
+        int currentYear = c.get(Calendar.YEAR);
+        int max = (220-(currentYear-birthYear));
+
+        long millis = activityDate.getTimeInMillis();
         Calendar hrC = Calendar.getInstance();
         hrC.setTimeInMillis(millis);
         hrC.add(Calendar.DATE, -hrDays);
-        long ftpD = getDaysTo(ftpC);
         long hrD = getDaysTo(hrC);
-        int maxFtp = ftpS;
-        int maxHr = hrMax;
-        for (AthleteDetail detail : athlete.getDetailList()) {
-            if (detail.getDate() >= ftpD)
-                maxFtp = Math.max(maxFtp, detail.getFtp());
-            if (detail.getDate() > hrD)
-                maxHr = Math.max(maxHr, detail.getHrm());
-        }
         for (Ftp f : athlete.getFtpList()) {
-            if (f.getDate() >= ftpD)
-                maxFtp = Math.max(maxFtp, f.getFtp());
-            if (f.getDate() > hrD)
-                maxHr = Math.max(maxHr, f.getHr());
+            if (f.getDate() >= hrD)
+                max = Math.max(max, f.getHr());
         }
+        return max;
+    }
 
+    private void checkFtp() {
+        int hrm = Math.max(determineMaxHR(), hrMax);
         if (athleteDetail != null) {
-            if (athleteDetail.getHrm() != maxHr) {
-                athleteDetail.setHrm(maxHr);
-                updateList(athlete.getDetailList(), athleteDetail);
+            boolean update = false;
+            if (athleteDetail.getHrm() != hrm) {
+                athleteDetail.setHrm(hrm);
+                update = true;
             }
-            if (athleteDetail.getFtp() != maxFtp) {
+            if (athleteDetail.getFtp() < ftpMax) {
                 long id = getDaysTo(activityDate);
-                AthleteDetail detail = new AthleteDetail(maxFtp, athleteDetail.getHrm(),
-                        athleteDetail.getHrr(), id, id);
-                updateList(athlete.getDetailList(), detail);
+                if (athleteDetail.getDate() == id)
+                    athleteDetail.setFtp(ftpMax);
+                else
+                    athleteDetail = new AthleteDetail(ftpMax, hrm, athleteDetail.getHrr(), id, id);
+                update = true;
             }
-        }
+            if (update)
+                updateList(athlete.getDetailList(), athleteDetail);
+        } else
+            calculateAthleteDetail();
     }
 
     private void setFtp(int ftp) {
@@ -286,15 +284,13 @@ public class StravaActivitiesExecutor {
         ftpAL.add(ftp);
         if (ftpAS.size() >= cntA) {
             int ftpTmp = Math.round((float)getAvg(ftpAS)*0.95f);
-            if (ftpTmp > ftpS)
-                ftpS = ftpTmp;
+            ftpMax = Math.max(ftpTmp, ftpMax);
             if (ftpAS.size() > cntA)
                 ftpAS.remove(0);
         }
         if (ftpAL.size() >= cntA) {
             int ftpTmp = getAvg(ftpAL);
-            if (ftpTmp > ftpL)
-                ftpL = ftpTmp;
+            ftpMax = Math.max(ftpTmp, ftpMax);
             if (ftpAL.size() > cntL)
                 ftpAL.remove(0);
         }

@@ -7,25 +7,25 @@ import lombok.Setter;
 @Setter
 public class StravaActivity {
     private final long id;
-    private Integer ftpEffort;
-    private Integer hrEffort;
+    private Integer pss;
+    private Integer hrss;
     private Long date;
     private String activityType;
     private Integer movingTime;
     private Double distance;
-    private Integer avgHr;
-    private Integer avgPwr;
-    private Integer avg20Pwr;
+    private Integer hrAvg;
+    private Integer pwrAvg;
+    private Integer pwrFtp;
 
     public StravaActivity(long id) {
         this.id = id;
     }
-    public StravaActivity withFtpEffort(Integer ftpEffort) {
-        this.ftpEffort = ftpEffort;
+    public StravaActivity withPss(Integer ftpEffort) {
+        this.pss = ftpEffort;
         return this;
     }
-    public StravaActivity withHrEffort(Integer hrEffort) {
-        this.hrEffort = hrEffort;
+    public StravaActivity withHrss(Integer hrEffort) {
+        this.hrss = hrEffort;
         return this;
     }
     public StravaActivity withDate(Long date) {

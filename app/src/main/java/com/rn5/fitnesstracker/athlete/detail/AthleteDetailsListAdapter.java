@@ -64,7 +64,6 @@ public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetai
     public void onBindViewHolder(AthleteDetailsListAdapter.MyViewHolder holder, final int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        Log.d(TAG,"onBindViewHolder() [" + position + "]");
         final View vItem = holder.vItem;
         vItem.setOnLongClickListener(view -> {
             AthleteDetailsAlert alert = new AthleteDetailsAlert(context, listener);
