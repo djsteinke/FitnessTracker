@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.define;
+package com.rn5.fitnesstracker.athlete.detail;
 
 import android.content.Context;
 import android.util.Log;
@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.model.AthleteDetail;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -17,8 +16,8 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.dayInMS;
-import static com.rn5.fitnesstracker.define.Constants.sdfDate;
+import static com.rn5.fitnesstracker.MainActivity.dayInMS;
+import static com.rn5.fitnesstracker.util.Constants.sdfDate;
 
 public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetailsListAdapter.MyViewHolder> implements AthleteDetailsListener {
     private static final String TAG = AthleteDetailsListAdapter.class.getSimpleName();

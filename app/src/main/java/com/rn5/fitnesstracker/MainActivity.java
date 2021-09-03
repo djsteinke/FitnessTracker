@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.activity;
+package com.rn5.fitnesstracker;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,16 +29,16 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
-import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.async.StravaAuthenticationAsync;
-import com.rn5.fitnesstracker.define.EventListener;
-import com.rn5.fitnesstracker.define.FitnessListAdapter;
-import com.rn5.fitnesstracker.executor.StravaActivitiesExecutor;
-import com.rn5.fitnesstracker.executor.StravaAuthenticationExecutor;
-import com.rn5.fitnesstracker.model.AthleteData;
-import com.rn5.fitnesstracker.model.Fitness;
-import com.rn5.fitnesstracker.model.StravaActivity;
-import com.rn5.fitnesstracker.model.StravaToken;
+import com.rn5.fitnesstracker.athlete.detail.AthleteDetailsActivity;
+import com.rn5.fitnesstracker.util.EventListener;
+import com.rn5.fitnesstracker.athlete.fitness.FitnessListAdapter;
+import com.rn5.fitnesstracker.strava.StravaActivitiesExecutor;
+import com.rn5.fitnesstracker.strava.StravaAuthenticationExecutor;
+import com.rn5.fitnesstracker.athlete.Athlete;
+import com.rn5.fitnesstracker.athlete.fitness.Fitness;
+import com.rn5.fitnesstracker.strava.StravaActivity;
+import com.rn5.fitnesstracker.strava.StravaLogin;
+import com.rn5.fitnesstracker.strava.StravaToken;
 import com.rn5.libstrava.authentication.model.AuthenticationType;
 
 import java.text.ParseException;
@@ -49,13 +49,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import static com.rn5.fitnesstracker.define.Constants.*;
+import static com.rn5.fitnesstracker.util.Constants.*;
 import static com.rn5.libstrava.common.model.Constants.TOKEN;
 
 public class MainActivity extends AppCompatActivity implements EventListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    public static AthleteData athleteData;
+    public static Athlete athlete;
 
     private ImageView ivFitnessCurve;
     private int fcW;
@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
         setFilePath();
         STRAVA_TOKEN = new StravaToken().fromFile();
-        athleteData = AthleteData.loadFromFile();
+        athlete = Athlete.loadFromFile();
         processAthleteData(true);
 
         int nightModeFlags = this.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
         Button request = findViewById(R.id.button);
         request.setOnClickListener(view -> {
-            athleteData.setLastUpdateTime(athleteData.getLastUpdateTime()-dayInMS);
+            athlete.setLastUpdateTime(athlete.getLastUpdateTime()-dayInMS);
             syncActivities();
         });
 
@@ -149,11 +149,11 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
     private void processAthleteData(boolean both) {
         activityArray = new LongSparseArray<>();
-        for (StravaActivity activity : athleteData.getActivityList())
+        for (StravaActivity activity : athlete.getActivityList())
             activityArray.put(activity.getId(), activity);
         if (both) {
             fitnessArray = new LongSparseArray<>();
-            for (Fitness fitness : athleteData.getFitnessList())
+            for (Fitness fitness : athlete.getFitnessList())
                 fitnessArray.put(fitness.getId(), fitness);
         }
     }
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
         Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
         //Calendar gmtDate = Calendar.getInstance();
-        int iDaySinceUp = (int) ((gmtDate.getTimeInMillis() -  athleteData.getLastUpdateTime())/dayInMS);
+        int iDaySinceUp = (int) ((gmtDate.getTimeInMillis() -  athlete.getLastUpdateTime())/dayInMS);
         aDays = (aDays<iDaySinceUp?aDays:iDaySinceUp+2);
         Log.d(TAG,"calculateFitness : aDays[" + aDays + "]");
 
@@ -210,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                     }
                 } else {
                     Fitness fitness = new Fitness(activity.getFtpEffort(), activity.getHrEffort(), 0d, 0d, 0d, dt);
-                    athleteData.getFitnessList().add(fitness);
+                    athlete.getFitnessList().add(fitness);
                     fitnessArray.put(dt, fitness);
                 }
             }
@@ -242,8 +242,9 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                     hrss = fitness.getHrStressScore();
                 }
             }
-            Double fit = dFit + (pss - dFit) * (1 - Math.exp((-1d / 42d)));
-            Double fatigue = dFat + (pss - dFat) * (1 - Math.exp((-1d / 7d)));
+            int ssTemp = (pss > 0 ? pss : hrss);
+            Double fit = dFit + (ssTemp - dFit) * (1 - Math.exp((-1d / 42d)));
+            Double fatigue = dFat + (ssTemp - dFat) * (1 - Math.exp((-1d / 7d)));
             Fitness fitness = new Fitness(pss,hrss,fit,fatigue,dFit-dFat, dt);
             fitnessArray.put(dt,fitness);
             dFit = fit;
@@ -260,8 +261,8 @@ public class MainActivity extends AppCompatActivity implements EventListener {
 
              */
         }
-        athleteData.updateFitnessList();
-        athleteData.save();
+        athlete.updateFitnessList();
+        athlete.save();
         setDataset();
         drawFitnessCurves();
         rvAdapter.notifyDataSetChanged();
@@ -520,7 +521,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     private void syncActivities() {
         Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
         long nextUpdate = gmtDate.getTimeInMillis() - (5*60*1000);
-        if (athleteData.getLastUpdateTime() == null || athleteData.getLastUpdateTime() < nextUpdate) {
+        if (athlete.getLastUpdateTime() == null || athlete.getLastUpdateTime() < nextUpdate) {
             StravaActivitiesExecutor executor = new StravaActivitiesExecutor(this);
             executor.run();
             //StravaActivitiesAsync async = new StravaActivitiesAsync(this);
@@ -529,20 +530,14 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     }
 
     @Override
-    public void onToast(final String msg) {
-        Looper.prepare();
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        Looper.loop();
-    }
-    @Override
     public void onActivitySynced() {
         processAthleteData(false);
         Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
         Log.d(TAG,"onActivitySynced()");
         Toast.makeText(this,"Activities Synced.",Toast.LENGTH_SHORT).show();
         calculateFitness();
-        athleteData.setLastUpdateTime(gmtDate.getTimeInMillis());
-        athleteData.save();
+        athlete.setLastUpdateTime(gmtDate.getTimeInMillis());
+        athlete.save();
     }
 
     @Override
@@ -599,7 +594,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                 break;
             case menu_sync_today:
                 Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
-                athleteData.setLastUpdateTime(gmtDate.getTimeInMillis() - dayInMS);
+                athlete.setLastUpdateTime(gmtDate.getTimeInMillis() - dayInMS);
                 syncActivities();
                 break;
             default :

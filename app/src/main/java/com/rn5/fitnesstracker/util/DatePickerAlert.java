@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.define;
+package com.rn5.fitnesstracker.util;
 
 import android.app.DatePickerDialog;
 import android.content.Context;

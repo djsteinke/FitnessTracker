@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.model;
+package com.rn5.fitnesstracker.strava;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +10,12 @@ public class StravaActivity {
     private Integer ftpEffort;
     private Integer hrEffort;
     private Long date;
+    private String activityType;
+    private Integer movingTime;
+    private Double distance;
+    private Integer avgHr;
+    private Integer avgPwr;
+    private Integer avg20Pwr;
 
     public StravaActivity(long id) {
         this.id = id;

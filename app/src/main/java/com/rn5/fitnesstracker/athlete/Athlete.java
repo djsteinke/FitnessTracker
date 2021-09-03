@@ -1,39 +1,35 @@
-package com.rn5.fitnesstracker.model;
+package com.rn5.fitnesstracker.athlete;
 
 import android.util.Log;
-import android.util.LongSparseArray;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.rn5.fitnesstracker.define.Json;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.rn5.fitnesstracker.athlete.detail.AthleteDetail;
+import com.rn5.fitnesstracker.athlete.fitness.Ftp;
+import com.rn5.fitnesstracker.athlete.fitness.Fitness;
+import com.rn5.fitnesstracker.strava.StravaActivity;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.List;
-import java.util.TimeZone;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.fitnessArray;
-import static com.rn5.fitnesstracker.activity.MainActivity.getDaysTo;
-import static com.rn5.fitnesstracker.define.Constants.APP_FILE_PATH;
-import static com.rn5.fitnesstracker.define.Constants.getObjectFromJsonString;
-import static com.rn5.fitnesstracker.define.Constants.loadFile;
-import static com.rn5.fitnesstracker.define.Constants.saveFile;
-import static java.util.Arrays.asList;
+import static com.rn5.fitnesstracker.MainActivity.fitnessArray;
+import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
+import static com.rn5.fitnesstracker.util.Constants.APP_FILE_PATH;
+import static com.rn5.fitnesstracker.util.Constants.getObjectFromJsonString;
+import static com.rn5.fitnesstracker.util.Constants.loadFile;
+import static com.rn5.fitnesstracker.util.Constants.saveFile;
 
-@lombok.Data
-public class AthleteData {
-    private static final String TAG = AthleteData.class.getSimpleName();
+@Getter
+@Setter
+public class Athlete {
+    private static final String TAG = Athlete.class.getSimpleName();
 
     private Long lastUpdateTime;
     private Integer age;
@@ -44,7 +40,7 @@ public class AthleteData {
 
     private static final String FILE_NAME = "AthleteData.json";
 
-    public AthleteData() {}
+    public Athlete() {}
 
     public void addAthleteDetail(AthleteDetail athleteDetail) {
         int i = 0;
@@ -62,7 +58,7 @@ public class AthleteData {
     public void updateAthleteDetail(AthleteDetail athleteDetail) {
         int i = 0;
         for (AthleteDetail d : detailList) {
-            if (d.getId() == athleteDetail.getId()) {
+            if (d.equals(athleteDetail)) {
                 break;
             }
             i++;
@@ -73,7 +69,7 @@ public class AthleteData {
     public void removeAthleteDetail(AthleteDetail athleteDetail) {
         int i = 0;
         for (AthleteDetail d : detailList) {
-            if (d == athleteDetail) {
+            if (d.equals(athleteDetail)) {
                 detailList.remove(i);
                 break;
             }
@@ -92,6 +88,8 @@ public class AthleteData {
     }
 
     public void save() {
+
+        detailList.sort(Comparator.reverseOrder());
         try {
             Gson gson = new GsonBuilder().create();
             String val = gson.toJson(this);
@@ -101,13 +99,13 @@ public class AthleteData {
         }
     }
 
-    public static AthleteData loadFromFile() {
+    public static Athlete loadFromFile() {
         try {
             String val = loadFile(APP_FILE_PATH, FILE_NAME);
-            return getObjectFromJsonString(val, AthleteData.class);
+            return getObjectFromJsonString(val, Athlete.class);
         } catch (FileNotFoundException e) {
             Log.e(TAG, "loadFromFile() FileNotFoundException");
-            AthleteData data = new AthleteData();
+            Athlete data = new Athlete();
             Calendar c = Calendar.getInstance();
             c.add(Calendar.YEAR, -1);
             data.getDetailList().add(new AthleteDetail(100, 182, 65, getDaysTo(c), getDaysTo(c)));
@@ -115,29 +113,6 @@ public class AthleteData {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    @Getter
-    @Setter
-    public static class Ftp {
-        int ftp;
-        int hr;
-        long date;
-
-        public Ftp() {}
-        public Ftp withFtp(int ftp) {
-            this.ftp = ftp;
-            return this;
-        }
-        public Ftp withHr(int hr) {
-            this.hr = hr;
-            return this;
-        }
-        public Ftp withDate(long dt) {
-            this.date = dt;
-            return this;
-        }
-
     }
 
 }

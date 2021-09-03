@@ -17,6 +17,7 @@ public class Activity implements Comparable<Activity> {
     @SerializedName("has_heartrate") private Boolean hasHeartrate;
     @SerializedName("start_date_local") private String startDate;
     @SerializedName("moving_time") private Integer movingTime;
+    @SerializedName("type") private String type;
 
     public Activity() {}
 

@@ -1,8 +1,6 @@
-package com.rn5.fitnesstracker.define;
+package com.rn5.fitnesstracker.athlete.fitness;
 
 import android.content.Context;
-import android.util.Log;
-import android.util.LongSparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,20 +9,21 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.model.Fitness;
+import com.rn5.fitnesstracker.strava.StravaActivity;
 
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.bDarkMode;
-import static com.rn5.fitnesstracker.activity.MainActivity.dayInMS;
+import static com.rn5.fitnesstracker.MainActivity.athlete;
+import static com.rn5.fitnesstracker.MainActivity.bDarkMode;
+import static com.rn5.fitnesstracker.MainActivity.dayInMS;
+import static com.rn5.fitnesstracker.util.Constants.mToMi;
+import static com.rn5.fitnesstracker.util.Constants.sToTime;
 
 public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.MyViewHolder> {
     private static final String TAG = FitnessListAdapter.class.getSimpleName();
@@ -74,6 +73,7 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
         TextView fitness = vItem.findViewById(R.id.fit_value);
         TextView fatigue = vItem.findViewById(R.id.fat_value);
         TextView form = vItem.findViewById(R.id.form_value);
+        TextView activityDetails = vItem.findViewById(R.id.activity_details);
 
         SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd", Locale.US);
         Calendar c = Calendar.getInstance();
@@ -87,6 +87,27 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
         fitness.setText(getStringVal(mDataset.get(position).getFitness()));
         fatigue.setText(getStringVal(mDataset.get(position).getFatigue()));
         form.setText(getStringVal(mDataset.get(position).getForm()));
+        long dtMax = dtMillis + dayInMS;
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        String tab = "     ";
+        for (StravaActivity act : athlete.getActivityList()) {
+            if (act.getDate() <= dtMax && act.getDate() >= dtMillis) {
+                if (!first)
+                    sb.append("\n");
+                String val = tab + sdf.format(act.getDate()) + tab + mToMi(act.getDistance()) + tab + sToTime(act.getMovingTime()) +
+                        "\n" + tab + "AvgP: " + act.getAvgPwr() + tab + "20MaxP: " + act.getAvg20Pwr() + tab + "AvgHr: " + act.getAvgHr();
+                sb.append(val);
+                first = false;
+            }
+            if (act.getDate() > dtMax)
+                break;
+        }
+        if (sb.length() > 0 ) {
+            activityDetails.setText(sb.toString());
+            activityDetails.setVisibility(View.VISIBLE);
+        }
+
     }
 
     private String getStringVal(double val) {

@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.activity;
+package com.rn5.fitnesstracker.athlete.detail;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -6,16 +6,13 @@ import android.view.MenuItem;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.define.AthleteDetailsAlert;
-import com.rn5.fitnesstracker.define.AthleteDetailsListAdapter;
-import com.rn5.fitnesstracker.define.AthleteDetailsListener;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.athleteData;
-import static com.rn5.fitnesstracker.activity.MainActivity.bDarkMode;
+import static com.rn5.fitnesstracker.MainActivity.athlete;
+import static com.rn5.fitnesstracker.MainActivity.bDarkMode;
 
 public class AthleteDetailsActivity extends AppCompatActivity implements AthleteDetailsListener {
 
@@ -39,7 +36,7 @@ public class AthleteDetailsActivity extends AppCompatActivity implements Athlete
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
-        rvAdapter = new AthleteDetailsListAdapter(this, athleteData.getDetailList());
+        rvAdapter = new AthleteDetailsListAdapter(this, athlete.getDetailList());
         recyclerView.setAdapter(rvAdapter);
 
         FloatingActionButton fab = findViewById(R.id.addAthleteDetails);

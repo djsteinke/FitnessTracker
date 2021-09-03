@@ -1,16 +1,10 @@
-package com.rn5.fitnesstracker.model;
-
-import com.rn5.fitnesstracker.define.Json;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Date;
+package com.rn5.fitnesstracker.athlete.fitness;
 
 import lombok.Data;
 
 @Data
 public class Fitness {
+    private Integer max20Power;
     private Integer stressScore;
     private Integer hrStressScore;
     private Double fitness;
@@ -29,6 +23,11 @@ public class Fitness {
         this.form = form;
         this.date = date;
         this.id = date;
+    }
+
+    public Fitness withMax20Power(Integer max20Power) {
+        this.max20Power = max20Power;
+        return this;
     }
 
     @Override

@@ -1,16 +1,12 @@
-package com.rn5.fitnesstracker.define;
+package com.rn5.fitnesstracker.util;
 
 import android.icu.text.SimpleDateFormat;
 import android.util.Log;
 import android.util.LongSparseArray;
-import android.util.SparseArray;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.rn5.fitnesstracker.model.AthleteDetail;
-import com.rn5.fitnesstracker.model.StravaToken;
-
-import org.json.JSONObject;
+import com.rn5.fitnesstracker.strava.StravaToken;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -29,9 +25,10 @@ public class Constants {
 
     public static StravaToken STRAVA_TOKEN;
 
-    public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+    public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 
-    public static SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    public static final SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    public static final long dayMs = 86400000;
 
     public static <C> List<C> asList(LongSparseArray<C> sparseArray) {
         if (sparseArray == null) return null;
@@ -96,5 +93,30 @@ public class Constants {
     public static <T> T getObjectFromJsonString(String val, Class<T> t) {
         Gson gson = new GsonBuilder().create();
         return gson.fromJson(val, t);
+    }
+
+    public static String mToMi(double m) {
+        double ret = m/1609.34;
+        int iRet = (int) (ret * 10.0d);
+        ret = (double) iRet/10.0d;
+        return ret + "mi";
+    }
+
+    public static String sToTime(int s) {
+        int hr = s/3600;
+        s = s%3600;
+        int min = s/60;
+        int sec = s%60;
+
+        String time = "";
+        if (hr > 0)
+            time = hr + ":";
+        if (min < 10)
+            time += "0";
+        time += min + ":";
+        if (sec < 10)
+            time += "0";
+        time += String.valueOf(sec);
+        return time;
     }
 }

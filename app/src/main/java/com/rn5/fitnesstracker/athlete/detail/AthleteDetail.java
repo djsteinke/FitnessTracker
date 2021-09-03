@@ -1,14 +1,5 @@
-package com.rn5.fitnesstracker.model;
+package com.rn5.fitnesstracker.athlete.detail;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Calendar;
-
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,7 +7,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class AthleteDetail {
+public class AthleteDetail implements Comparable<AthleteDetail> {
 
     private long id;
     private long date;
@@ -34,9 +25,15 @@ public class AthleteDetail {
         this.hrr = hrr;
         this.date = date;
     }
+
     public AthleteDetail isAuto(boolean auto) {
         this.auto = auto;
         return this;
+    }
+
+    @Override
+    public int compareTo(AthleteDetail o1) {
+        return Long.compare(this.id, o1.getId());
     }
 
     @Override

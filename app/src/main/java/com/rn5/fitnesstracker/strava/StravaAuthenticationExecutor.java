@@ -1,11 +1,10 @@
-package com.rn5.fitnesstracker.executor;
+package com.rn5.fitnesstracker.strava;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.rn5.fitnesstracker.async.StravaAuthenticationAsync;
-import com.rn5.fitnesstracker.define.EventListener;
+import com.rn5.fitnesstracker.util.EventListener;
 import com.rn5.libstrava.authentication.api.StravaAuthentication;
 import com.rn5.libstrava.authentication.model.AuthenticationResponse;
 import com.rn5.libstrava.authentication.model.AuthenticationType;
@@ -16,8 +15,7 @@ import java.util.concurrent.Executors;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import static com.rn5.fitnesstracker.define.Constants.STRAVA_TOKEN;
-import static com.rn5.libstrava.common.model.Constants.TOKEN;
+import static com.rn5.fitnesstracker.util.Constants.STRAVA_TOKEN;
 
 public class StravaAuthenticationExecutor {
 

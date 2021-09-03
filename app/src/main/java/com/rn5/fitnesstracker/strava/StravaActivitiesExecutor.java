@@ -1,13 +1,12 @@
-package com.rn5.fitnesstracker.executor;
+package com.rn5.fitnesstracker.strava;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.rn5.fitnesstracker.define.EventListener;
-import com.rn5.fitnesstracker.model.AthleteData;
-import com.rn5.fitnesstracker.model.AthleteDetail;
-import com.rn5.fitnesstracker.model.StravaActivity;
+import com.rn5.fitnesstracker.util.EventListener;
+import com.rn5.fitnesstracker.athlete.fitness.Ftp;
+import com.rn5.fitnesstracker.athlete.detail.AthleteDetail;
 import com.rn5.libstrava.activities.api.ActivityAPI;
 import com.rn5.libstrava.activities.model.Activity;
 import com.rn5.libstrava.common.api.StravaConfig;
@@ -19,18 +18,19 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.athleteData;
-import static com.rn5.fitnesstracker.activity.MainActivity.dayInMS;
-import static com.rn5.fitnesstracker.activity.MainActivity.getDaysTo;
-import static com.rn5.fitnesstracker.define.Constants.sdf;
-import static com.rn5.fitnesstracker.define.Constants.sdfDate;
-import static com.rn5.fitnesstracker.define.Constants.updateList;
+import static com.rn5.fitnesstracker.MainActivity.athlete;
+import static com.rn5.fitnesstracker.MainActivity.dayInMS;
+import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
+import static com.rn5.fitnesstracker.util.Constants.sdf;
+import static com.rn5.fitnesstracker.util.Constants.sdfDate;
+import static com.rn5.fitnesstracker.util.Constants.updateList;
 
 public class StravaActivitiesExecutor {
 
@@ -39,6 +39,8 @@ public class StravaActivitiesExecutor {
     private int ftpS = 0;
     private int ftpL = 0;
     private int hrMax = 0;
+    private static final int ftpDays = 90;
+    private static final int hrDays = 180;
     private final List<Integer> ftpAS = new ArrayList<>();
     private final List<Integer> ftpAL = new ArrayList<>();
     private AthleteDetail athleteDetail;
@@ -52,7 +54,7 @@ public class StravaActivitiesExecutor {
         Handler handler = new Handler(Looper.getMainLooper());
         Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Log.d(TAG,"Last update [" + athleteData.getLastUpdateTime() + "]");
+            Log.d(TAG,"Last update [" + athlete.getLastUpdateTime() + "]");
             StravaConfig config = StravaConfig.auth()
                     .debug()
                     .build();
@@ -60,12 +62,12 @@ public class StravaActivitiesExecutor {
             Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
             List<Activity> activities = null;
             try {
-                if (athleteData.getLastUpdateTime() == null) {
+                if (athlete.getLastUpdateTime() == null) {
                     Calendar dt = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
                     dt.add(Calendar.DATE,-180);
-                    athleteData.setLastUpdateTime(dt.getTimeInMillis());
+                    athlete.setLastUpdateTime(dt.getTimeInMillis());
                 }
-                activities = api.getActivities(athleteData.getLastUpdateTime() / 1000, gmtDate.getTimeInMillis() / 1000).execute();
+                activities = api.getActivities(athlete.getLastUpdateTime() / 1000, gmtDate.getTimeInMillis() / 1000).execute();
             } catch (StravaAPIException e) {
                 Log.e(TAG,"StravaAPIException[" + e.getMessage() + "]");
             }
@@ -75,6 +77,10 @@ public class StravaActivitiesExecutor {
             if (activities != null) {
                 Collections.sort(activities);
                 for (Activity activity : activities) {
+                    ftpAS.clear();
+                    ftpAL.clear();
+                    ftpS = 0;
+                    ftpL = 0;
                     StreamAPI streamAPI = new StreamAPI(config);
                     Stream stream = streamAPI.getStreams(activity.getId()).execute();
 
@@ -88,7 +94,7 @@ public class StravaActivitiesExecutor {
                     activityDate = Calendar.getInstance();
                     activityDate.setTime(date);
                     Log.d(TAG, "getDaysTo: " + getDaysTo(activityDate));
-                    athleteDetail = getCurrentDetail();
+                    setCurrentDetail();
                     Log.d(TAG, athleteDetail.toString());
 
 
@@ -104,12 +110,10 @@ public class StravaActivitiesExecutor {
 
                     //Double pst = 0d;
                     double rollAvgPow = 0d;
+                    double powTot = 0.0d;
                     double st = (double) activity.getMovingTime();
                     double psc = 0d;
-                /*
-                if (stream.getDistance() != null)
-                    st = (double) stream.getDistance().getOriginalSize();
-                 */
+
                     int i = 0;
                     if (stream.getWatts() != null) {
                         for (Double val : stream.getWatts().getData()) {
@@ -120,6 +124,7 @@ public class StravaActivitiesExecutor {
                                     if (pow30.size() > 30)
                                         pow30.remove(30);
                                     psc ++;
+                                    powTot += val;
                                     rollAvgPow += Math.pow(getAvg30(pow30),4);
                                 }
                             }
@@ -132,6 +137,7 @@ public class StravaActivitiesExecutor {
                     double pss = wp*(wp/ftp)*st/(ftp*3600d)*100d;
                     Log.d(TAG,"StartDateLocal:" + date);
                     int iPSS = (int) Math.round(pss);
+                    double powAvg = (psc > 0 ? powTot/psc : 0.0d);
 
                     i = 0;
                     double hrsc = 0d;
@@ -156,20 +162,37 @@ public class StravaActivitiesExecutor {
                             i++;
                         }
                     }
-                    double hravg = hrtot/hrsc;
+                    double hravg = (hrsc > 0 ? hrtot/hrsc : 0.0d);
                     //hrr = (hravg-hrr)/(hrm-hrr);
                     //trimp = (st/60d)*hrr*0.64d*Math.exp(1.92d*hrr);
                     double hrss = (int) (trimp/getHRatLTHR()*100d);
                     int iHRSS = (int) Math.round(hrss);
                     Log.d(TAG,"TRIMP [" + trimp + "] HRSS [" + hrss + "] HRAvg[" + hravg + "]");
+
+                    double distance = 0.0d;
+                    if (stream.getDistance() != null) {
+                        for (Double val : stream.getDistance().getData()) {
+                            if (val == null) {
+                                val = 0d;
+                            }
+                            distance = Math.max(distance, val);
+                        }
+                    }
+
                     StravaActivity stravaActivity = new StravaActivity(activity.getId())
-                            .withFtpEffort(iPSS>0?iPSS:iHRSS)
+                            .withFtpEffort(iPSS)
                             .withHrEffort(iHRSS)
                             .withDate(date.getTime());
-                    updateList(athleteData.getActivityList(), stravaActivity);
+                    stravaActivity.setAvg20Pwr(ftpS);
+                    stravaActivity.setDistance(distance);
+                    stravaActivity.setMovingTime(activity.getMovingTime());
+                    stravaActivity.setAvgHr((int) hravg);
+                    stravaActivity.setAvgPwr((int) powAvg);
+                    stravaActivity.setActivityType(activity.getType());
+                    updateList(athlete.getActivityList(), stravaActivity);
                     Log.e("PSS","PSS[" + pss + "]");
                     if (ftpS > 0 || ftpL > 0) {
-                        athleteData.getFtpList().add(new AthleteData.Ftp()
+                        athlete.getFtpList().add(new Ftp()
                                 .withFtp(ftpS)
                                 .withHr(hrMax)
                                 .withDate(getDaysTo(activityDate)));
@@ -182,20 +205,37 @@ public class StravaActivitiesExecutor {
         });
     }
 
-    private AthleteDetail getCurrentDetail() {
+    private void setCurrentDetail() {
+
         long d = getDaysTo(activityDate);
+
+        athlete.getDetailList().sort(Comparator.reverseOrder());
+        AthleteDetail tmpAthleteDetail = athlete.getDetailList().get(0);
+        if (d - tmpAthleteDetail.getDate() < ftpDays)
+            athleteDetail = tmpAthleteDetail;
+        else
+            calculateAthleteDetail();
+
+
         long maxD = 0;
-        for (AthleteDetail detail : athleteData.getDetailList()) {
+        for (AthleteDetail detail : athlete.getDetailList()) {
             if (detail.getDate() <= d && detail.getDate() > maxD) {
                 maxD = detail.getDate();
             }
         }
-        for (AthleteDetail detail : athleteData.getDetailList()) {
-            if (detail.getDate() == maxD) {
-                return detail;
+        if (maxD > 0) {
+            for (AthleteDetail detail : athlete.getDetailList()) {
+                if (detail.getDate() == maxD) {
+                    athleteDetail = detail;
+                    return;
+                }
             }
         }
-        return new AthleteDetail(100,182,65, d, d);
+        athleteDetail = new AthleteDetail(100,182,65, d, d);
+    }
+
+    private void calculateAthleteDetail() {
+
     }
 
     private void checkFtp() {
@@ -212,29 +252,29 @@ public class StravaActivitiesExecutor {
         long hrD = getDaysTo(hrC);
         int maxFtp = ftpS;
         int maxHr = hrMax;
-        for (AthleteData.Ftp f : athleteData.getFtpList()) {
-            if (f.getDate() >= ftpD)
-                maxFtp = Math.max(maxFtp, f.getFtp());
-            if (f.getDate() > hrD)
-                maxHr = Math.max(maxHr, f.getHr());
-        }
-        for (AthleteDetail detail : athleteData.getDetailList()) {
+        for (AthleteDetail detail : athlete.getDetailList()) {
             if (detail.getDate() >= ftpD)
                 maxFtp = Math.max(maxFtp, detail.getFtp());
             if (detail.getDate() > hrD)
                 maxHr = Math.max(maxHr, detail.getHrm());
         }
+        for (Ftp f : athlete.getFtpList()) {
+            if (f.getDate() >= ftpD)
+                maxFtp = Math.max(maxFtp, f.getFtp());
+            if (f.getDate() > hrD)
+                maxHr = Math.max(maxHr, f.getHr());
+        }
 
         if (athleteDetail != null) {
             if (athleteDetail.getHrm() != maxHr) {
                 athleteDetail.setHrm(maxHr);
-                updateList(athleteData.getDetailList(), athleteDetail);
+                updateList(athlete.getDetailList(), athleteDetail);
             }
             if (athleteDetail.getFtp() != maxFtp) {
                 long id = getDaysTo(activityDate);
                 AthleteDetail detail = new AthleteDetail(maxFtp, athleteDetail.getHrm(),
                         athleteDetail.getHrr(), id, id);
-                updateList(athleteData.getDetailList(), detail);
+                updateList(athlete.getDetailList(), detail);
             }
         }
     }
@@ -245,12 +285,16 @@ public class StravaActivitiesExecutor {
         ftpAS.add(ftp);
         ftpAL.add(ftp);
         if (ftpAS.size() >= cntA) {
-            ftpS = Math.round((float)getAvg(ftpAS)*0.95f);
+            int ftpTmp = Math.round((float)getAvg(ftpAS)*0.95f);
+            if (ftpTmp > ftpS)
+                ftpS = ftpTmp;
             if (ftpAS.size() > cntA)
                 ftpAS.remove(0);
         }
         if (ftpAL.size() >= cntA) {
-            ftpL = getAvg(ftpAL);
+            int ftpTmp = getAvg(ftpAL);
+            if (ftpTmp > ftpL)
+                ftpL = ftpTmp;
             if (ftpAL.size() > cntL)
                 ftpAL.remove(0);
         }

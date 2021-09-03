@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.define;
+package com.rn5.fitnesstracker.athlete.detail;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -14,15 +14,16 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.model.AthleteDetail;
+import com.rn5.fitnesstracker.util.DatePickerAlert;
 
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
-import static com.rn5.fitnesstracker.activity.MainActivity.athleteData;
-import static com.rn5.fitnesstracker.activity.MainActivity.getDaysTo;
-import static com.rn5.fitnesstracker.define.Constants.sdfDate;
+import static com.rn5.fitnesstracker.MainActivity.athlete;
+import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
+import static com.rn5.fitnesstracker.util.Constants.dayMs;
+import static com.rn5.fitnesstracker.util.Constants.sdfDate;
 
 public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
     private static final String TAG = AthleteDetailsAlert.class.getSimpleName();
@@ -37,7 +38,7 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
     }
 
     public AthleteDetailsAlert withAthleteDetails(int pos) {
-        this.athleteDetail = athleteData.getDetailList().get(pos);
+        this.athleteDetail = athlete.getDetailList().get(pos);
         return this;
     }
 
@@ -49,8 +50,8 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
             builder.setNegativeButton(R.string.cancel, (dialogInterface, i) -> {
             })
                     .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
-                        athleteData.removeAthleteDetail(athleteDetail);
-                        athleteData.save();
+                        athlete.removeAthleteDetail(athleteDetail);
+                        athlete.save();
                         listener.onAthleteDetailsUpdate();
                     });
 
@@ -74,7 +75,9 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
             etFtp.setText(String.valueOf(athleteDetail.getFtp()));
             etHrm.setText(String.valueOf(athleteDetail.getHrm()));
             etHrr.setText(String.valueOf(athleteDetail.getHrr()));
-            Date date = new Date(athleteDetail.getDate());
+            Calendar c = Calendar.getInstance();
+            long dtMs = athleteDetail.getDate()*dayMs - c.getTimeZone().getRawOffset();
+            Date date = new Date(dtMs);
             etDate.setText(sdfDate.format(date));
             auto.setChecked(athleteDetail.isAuto());
         }
@@ -116,7 +119,7 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
                                 athleteDetail.setHrr(Integer.parseInt(etHrr.getText().toString()));
                                 athleteDetail.setDate(getDaysTo(cal));
                                 athleteDetail.setAuto(auto.isChecked());
-                                athleteData.updateAthleteDetail(athleteDetail);
+                                athlete.updateAthleteDetail(athleteDetail);
                             } else {
                                 AthleteDetail detail = new AthleteDetail(
                                         Integer.parseInt(etFtp.getText().toString()),
@@ -124,9 +127,9 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
                                         Integer.parseInt(etHrr.getText().toString()),
                                         getDaysTo(cal),
                                         getDaysTo(cal)).isAuto(auto.isChecked());
-                                athleteData.addAthleteDetail(detail);
+                                athlete.addAthleteDetail(detail);
                             }
-                            athleteData.save();
+                            athlete.save();
                             listener.onAthleteDetailsUpdate();
                             //rvAdapter.notifyDataSetChanged();
                             Log.d(TAG, "addAthleteDetails() - details Saved");
