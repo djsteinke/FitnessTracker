@@ -438,9 +438,10 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                     yFgP = yFg;
                     yFmP = yFm;
 
-                    if (fitness.getStressScore() != null && fitness.getStressScore() > 0) {
+                    if ((fitness.getStressScore() != null && fitness.getStressScore() > 0) ||
+                            (fitness.getHrStressScore() != null && fitness.getHrStressScore() > 0)) {
                         paintS.setAlpha(255);
-                        fitnessCurves.drawCircle(x, (float) y0, 4, paintS);
+                        fitnessCurves.drawCircle(x, y0, 4, paintS);
                     }
                 } else {
                     Log.d(TAG, "fitness is null");
@@ -485,7 +486,8 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         long today = getDaysTo(Calendar.getInstance());
         for (int i=0;i<fitnessArray.size();i++) {
             long key = fitnessArray.keyAt(i);
-            if (key == today || key == today+1 || (key < today && fitnessArray.get(key).getStressScore() > 0)) {
+            if (key == today || key == today+1 ||
+                    (key < today && (fitnessArray.get(key).getStressScore() > 0 || fitnessArray.get(key).getHrStressScore() > 0))) {
                 int fitIndex = getFitIndex(fitnessArray.get(key));
                 if (fitIndex >= 0) {
                     rvaDataset.set(fitIndex,fitnessArray.get(key));
@@ -593,7 +595,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
                 break;
             case menu_sync_today:
                 Calendar gmtDate = Calendar.getInstance(TimeZone.getTimeZone("gmt"));
-                athlete.setLastUpdateTime(gmtDate.getTimeInMillis() - dayInMS);
+                athlete.setLastUpdateTime(gmtDate.getTimeInMillis() - 3*dayInMS);
                 syncActivities();
                 break;
             default :

@@ -1,9 +1,11 @@
 package com.rn5.fitnesstracker.athlete.fitness;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +16,7 @@ import com.rn5.fitnesstracker.strava.StravaActivity;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -73,7 +76,7 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
         TextView fitness = vItem.findViewById(R.id.fit_value);
         TextView fatigue = vItem.findViewById(R.id.fat_value);
         TextView form = vItem.findViewById(R.id.form_value);
-        TextView activityDetails = vItem.findViewById(R.id.activity_details);
+        LinearLayout activityDetails = vItem.findViewById(R.id.ll_data);
 
         SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd", Locale.US);
         Calendar c = Calendar.getInstance();
@@ -88,26 +91,73 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
         fatigue.setText(getStringVal(mDataset.get(position).getFatigue()));
         form.setText(getStringVal(mDataset.get(position).getForm()));
         long dtMax = dtMillis + dayInMS;
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb_distance = new StringBuilder();
+        StringBuilder sb_time = new StringBuilder();
+        StringBuilder sb_power = new StringBuilder();
+        StringBuilder sb_ftp = new StringBuilder();
+        StringBuilder sb_hr = new StringBuilder();
+        //sb_distance.append("Distance(mi)");
+        sb_time.append("Time");
+        sb_power.append("Power");
+        sb_ftp.append("FTP");
+        sb_hr.append("HR");
         boolean first = true;
         String tab = "     ";
         for (StravaActivity act : athlete.getActivityList()) {
             if (act.getDate() <= dtMax && act.getDate() >= dtMillis) {
-                if (!first)
-                    sb.append("\n");
+                if (first)
+                    sb_distance.append("Distance");
                 String val = tab + sdf.format(act.getDate()) + tab + mToMi(act.getDistance()) + tab + sToTime(act.getMovingTime()) +
-                        "\n" + tab + "AvgP: " + act.getPwrAvg() + tab + "20MaxP: " + act.getPwrFtp() + tab + "AvgHr: " + act.getHrAvg();
-                sb.append(val);
+                        "\n" + (act.getPwrAvg() > 0 ? tab + "AvgP: " + act.getPwrAvg() : "") +
+                        (act.getPwrFtp() > 0 ? tab + "MaxFtp: " + act.getPwrFtp() : "") +
+                        (act.getHrAvg() > 0 ? tab + "AvgHr: " + act.getHrAvg() : "");
+                String[] stringValues = new String[5];
+                int[] intValues = new int[5];
+                stringValues[0] = "\n" + mToMi(act.getDistance());
+                intValues[0] = stringValues[0].length();
+                stringValues[1] = "\n" + sToTime(act.getMovingTime());
+                intValues[1] = stringValues[1].length();
+                stringValues[2] = "\n" + act.getPwrAvg();
+                intValues[2] = stringValues[2].length();
+                stringValues[3] = "\n" + act.getPwrFtp();
+                intValues[3] = stringValues[3].length();
+                stringValues[4] = "\n" + act.getHrAvg();
+                intValues[4] = stringValues[4].length();
+                String val2 = (first ? tab + "Distance" + tab + "Time" + tab + "Power" + tab + "FTP" + tab + "HR" + "\n" : "") +
+                        tab + stringValues[0] + getSpace(5 + 8 - intValues[0]) +
+                        stringValues[1] + getSpace(5 + 4 - intValues[1]) +
+                        stringValues[2] + getSpace(5 + 5 - intValues[2]) +
+                        stringValues[3] + getSpace(5 + 3 - intValues[3]) +
+                        stringValues[4];
+
+                sb_distance.append(stringValues[0]);
+                sb_time.append(stringValues[1]);
+                sb_power.append(stringValues[2]);
+                sb_ftp.append(stringValues[3]);
+                sb_hr.append(stringValues[4]);
+
+                //sb.append(val2);
                 first = false;
             }
             if (act.getDate() > dtMax)
                 break;
         }
-        if (sb.length() > 0 ) {
-            activityDetails.setText(sb.toString());
+        if (sb_distance.length() > 0 ) {
             activityDetails.setVisibility(View.VISIBLE);
-        }
+            ((TextView) vItem.findViewById(R.id.tv_distance)).setText(sb_distance.toString());
+            ((TextView) vItem.findViewById(R.id.tv_time)).setText(sb_time.toString());
+            ((TextView) vItem.findViewById(R.id.tv_power)).setText(sb_power.toString());
+            ((TextView) vItem.findViewById(R.id.tv_ftp)).setText(sb_ftp.toString());
+            ((TextView) vItem.findViewById(R.id.tv_hr)).setText(sb_hr.toString());
+        } else
+            activityDetails.setVisibility(View.GONE);
+    }
 
+    private String getSpace(int c) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i <= c; i++)
+            sb.append(" ");
+        return sb.toString();
     }
 
     private String getStringVal(double val) {

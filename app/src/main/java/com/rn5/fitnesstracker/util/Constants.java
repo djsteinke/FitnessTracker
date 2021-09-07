@@ -45,7 +45,7 @@ public class Constants {
         int i = 0;
         boolean found = false;
         for (T d : list) {
-            if (d == t) {
+            if (d.equals(t)) {
                 found = true;
                 break;
             }
