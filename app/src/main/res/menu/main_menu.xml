@@ -20,6 +20,9 @@
                 android:id="@+id/sync_today"
                 android:title="@string/sync_today"
                 android:icon="@drawable/ic_sync_black_24dp"/>
+            <item
+                android:id="@+id/training_load"
+                android:title="@string/training_load"/>
         </menu>
     </item>
 </menu>

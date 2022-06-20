@@ -4,6 +4,7 @@
     <string name="strava_login">Strava Login</string>
     <string name="athlete_details">Athlete Details</string>
     <string name="sync_today">Sync Today</string>
+    <string name="training_load">Training Load</string>
 
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
@@ -12,9 +13,13 @@
     <string name="hr_max">HR Max:</string>
     <string name="hr_rest">HR Rest:</string>
 
+    <string name="type">Type</string>
+    <string name="time">Time</string>
+    <string name="power">Power</string>
+    <string name="hr">HR</string>
     <string name="add">Add</string>
-    <string name="pss">PSS:</string>
-    <string name="hrss">HRSS:</string>
+    <string name="pss">PSS</string>
+    <string name="hrss">HRSS</string>
     <string name="fitness">Fitness:</string>
     <string name="fatigue">Fatigue:</string>
     <string name="form">Form:</string>

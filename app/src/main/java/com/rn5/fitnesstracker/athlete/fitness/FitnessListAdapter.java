@@ -1,22 +1,29 @@
 package com.rn5.fitnesstracker.athlete.fitness;
 
 import android.content.Context;
-import android.util.Log;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.rn5.fitnesstracker.R;
 import com.rn5.fitnesstracker.strava.StravaActivity;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -77,20 +84,31 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
         TextView fatigue = vItem.findViewById(R.id.fat_value);
         TextView form = vItem.findViewById(R.id.form_value);
         LinearLayout activityDetails = vItem.findViewById(R.id.ll_data);
+        LinearLayout llActivities = vItem.findViewById(R.id.ll_activities);
 
+        /*
         SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM dd", Locale.US);
         Calendar c = Calendar.getInstance();
         long dtMillis = mDataset.get(position).getDate()*dayInMS - c.getTimeZone().getRawOffset();
         c.setTimeInMillis(dtMillis);
+
+         */
         //Log.d(TAG,"Millis [" + dtMillis + "] Date [" + sdf.format(c.getTime()) +"]" + "rawOffset [" + c.getTimeZone().getRawOffset() + "]");
 
-        date.setText(sdf.format(c.getTime()));
-        pss.setText(String.valueOf(mDataset.get(position).getStressScore()));
-        hrss.setText(String.valueOf(mDataset.get(position).getHrStressScore()));
+        long epochDay = mDataset.get(position).getId();
+
+        LocalDate ld = LocalDate.ofEpochDay(epochDay);
+
+        //date.setText(sdf.format(c.getTime()));
+        date.setText(ld.format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
+        // TODO
+        //pss.setText(String.valueOf(mDataset.get(position).getPwrStressScore()));
+        //hrss.setText(String.valueOf(mDataset.get(position).getHrStressScore()));
         fitness.setText(getStringVal(mDataset.get(position).getFitness()));
         fatigue.setText(getStringVal(mDataset.get(position).getFatigue()));
         form.setText(getStringVal(mDataset.get(position).getForm()));
-        long dtMax = dtMillis + dayInMS;
+        //long dtMax = dtMillis + dayInMS;
+        long dtMax = epochDay + 1;
         StringBuilder sb_distance = new StringBuilder();
         StringBuilder sb_time = new StringBuilder();
         StringBuilder sb_power = new StringBuilder();
@@ -103,45 +121,64 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
         sb_hr.append("HR");
         boolean first = true;
         String tab = "     ";
+        boolean actExists = false;
+        LinearLayout llType = llActivities.findViewById(R.id.ll_type);
+        removeChildViews(llType);
+        LinearLayout llTime = llActivities.findViewById(R.id.ll_time);
+        removeChildViews(llTime);
+        LinearLayout llPower = llActivities.findViewById(R.id.ll_power);
+        removeChildViews(llPower);
+        LinearLayout llHR = llActivities.findViewById(R.id.ll_hr);
+        removeChildViews(llHR);
+        LinearLayout llPss = llActivities.findViewById(R.id.ll_pss);
+        removeChildViews(llPss);
+        LinearLayout llHrss = llActivities.findViewById(R.id.ll_hrss);
+        removeChildViews(llHrss);
         for (StravaActivity act : athlete.getActivityList()) {
-            if (act.getDate() <= dtMax && act.getDate() >= dtMillis) {
-                if (first)
-                    sb_distance.append("Distance");
-                String val = tab + sdf.format(act.getDate()) + tab + mToMi(act.getDistance()) + tab + sToTime(act.getMovingTime()) +
-                        "\n" + (act.getPwrAvg() > 0 ? tab + "AvgP: " + act.getPwrAvg() : "") +
-                        (act.getPwrFtp() > 0 ? tab + "MaxFtp: " + act.getPwrFtp() : "") +
-                        (act.getHrAvg() > 0 ? tab + "AvgHr: " + act.getHrAvg() : "");
-                String[] stringValues = new String[5];
-                int[] intValues = new int[5];
-                stringValues[0] = "\n" + mToMi(act.getDistance());
-                intValues[0] = stringValues[0].length();
-                stringValues[1] = "\n" + sToTime(act.getMovingTime());
-                intValues[1] = stringValues[1].length();
-                stringValues[2] = "\n" + act.getPwrAvg();
-                intValues[2] = stringValues[2].length();
-                stringValues[3] = "\n" + act.getPwrFtp();
-                intValues[3] = stringValues[3].length();
-                stringValues[4] = "\n" + act.getHrAvg();
-                intValues[4] = stringValues[4].length();
-                String val2 = (first ? tab + "Distance" + tab + "Time" + tab + "Power" + tab + "FTP" + tab + "HR" + "\n" : "") +
-                        tab + stringValues[0] + getSpace(5 + 8 - intValues[0]) +
-                        stringValues[1] + getSpace(5 + 4 - intValues[1]) +
-                        stringValues[2] + getSpace(5 + 5 - intValues[2]) +
-                        stringValues[3] + getSpace(5 + 3 - intValues[3]) +
-                        stringValues[4];
-
-                sb_distance.append(stringValues[0]);
-                sb_time.append(stringValues[1]);
-                sb_power.append(stringValues[2]);
-                sb_ftp.append(stringValues[3]);
-                sb_hr.append(stringValues[4]);
-
-                //sb.append(val2);
-                first = false;
+            if (act.getDate() == epochDay) {
+                actExists = true;
+                String actType = act.getActivityType();
+                if (actType.contains("Ride"))
+                    actType = "Ride";
+                else
+                    actType = "Run";
+                llType.addView(getTextView((TextView) llType.getChildAt(0), new SpannableStringBuilder(actType)));
+                llTime.addView(getTextView((TextView) llTime.getChildAt(0), new SpannableStringBuilder(sToTime(act.getMovingTime()))));
+                if (act.getPwrAvg() > 0) {
+                    //SpannableStringBuilder ssb = new SpannableStringBuilder("Pwr: " + act.getPwrAvg());
+                    //ssb.setSpan(new ForegroundColorSpan(context.getColor(R.color.gray)), 0, 3, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    SpannableStringBuilder ssb = new SpannableStringBuilder(act.getPwrAvg() + "w");
+                    ssb.setSpan(new ForegroundColorSpan(context.getColor(R.color.gray)), ssb.length()-1, ssb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    llPower.addView(getTextView((TextView) llPower.getChildAt(0), ssb));
+                } else
+                    llPower.addView(getTextView((TextView) llPower.getChildAt(0), new SpannableStringBuilder(" ")));
+                if (act.getHrAvg() > 0) {
+                    //SpannableStringBuilder ssb = new SpannableStringBuilder("HR: " + act.getHrAvg());
+                    //ssb.setSpan(new ForegroundColorSpan(context.getColor(R.color.gray)), 0, 2, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    SpannableStringBuilder ssb = new SpannableStringBuilder(act.getHrAvg() + "bpm");
+                    ssb.setSpan(new ForegroundColorSpan(context.getColor(R.color.gray)), ssb.length()-3, ssb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    llHR.addView(getTextView((TextView) llHR.getChildAt(0), ssb));
+                } else
+                    llHR.addView(getTextView((TextView) llHR.getChildAt(0), new SpannableStringBuilder(" ")));
+                int pssColor = (act.getPss()>=act.getHrss()?R.color.red_light:R.color.red);
+                int hrssColor = (act.getPss()<act.getHrss()?R.color.red_light:R.color.red);
+                if (act.getPss() > 0) {
+                    SpannableStringBuilder ssb = new SpannableStringBuilder("PSS: " + act.getPss());
+                    ssb.setSpan(new ForegroundColorSpan(context.getColor(R.color.gray)), 0, 4, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    ssb.setSpan(new ForegroundColorSpan(context.getColor(pssColor)), 4, ssb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    llPss.addView(getTextView((TextView) llPss.getChildAt(0), ssb));
+                } else
+                    llPss.addView(getTextView((TextView) llPss.getChildAt(0), new SpannableStringBuilder(" ")));
+                if (act.getHrAvg() > 0) {
+                    SpannableStringBuilder ssb = new SpannableStringBuilder("HRSS: " + act.getHrss());
+                    ssb.setSpan(new ForegroundColorSpan(context.getColor(R.color.gray)), 0, 5, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    ssb.setSpan(new ForegroundColorSpan(context.getColor(hrssColor)), 5, ssb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    llHrss.addView(getTextView((TextView) llHrss.getChildAt(0), ssb));
+                } else
+                    llHrss.addView(getTextView((TextView) llHrss.getChildAt(0), new SpannableStringBuilder(" ")));
             }
-            if (act.getDate() > dtMax)
-                break;
         }
+        llActivities.setVisibility((actExists?View.VISIBLE:View.GONE));
         if (sb_distance.length() > 0 ) {
             activityDetails.setVisibility(View.VISIBLE);
             ((TextView) vItem.findViewById(R.id.tv_distance)).setText(sb_distance.toString());
@@ -151,6 +188,18 @@ public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.
             ((TextView) vItem.findViewById(R.id.tv_hr)).setText(sb_hr.toString());
         } else
             activityDetails.setVisibility(View.GONE);
+    }
+
+    private TextView getTextView(TextView orig, SpannableStringBuilder val) {
+        TextView newView = new TextView(orig.getContext());
+        newView.setLayoutParams(orig.getLayoutParams());
+        newView.setText(val);
+        return newView;
+    }
+
+    private void removeChildViews(LinearLayout ll) {
+        if (ll.getChildCount() > 1)
+            ll.removeViews(1, (ll.getChildCount()-1));
     }
 
     private String getSpace(int c) {

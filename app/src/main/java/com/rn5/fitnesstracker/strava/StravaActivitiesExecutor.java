@@ -15,21 +15,24 @@ import com.rn5.libstrava.stream.api.StreamAPI;
 import com.rn5.libstrava.stream.model.Stream;
 
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import static com.rn5.fitnesstracker.MainActivity.athlete;
 import static com.rn5.fitnesstracker.MainActivity.dayInMS;
-import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
 import static com.rn5.fitnesstracker.util.Constants.sdf;
-import static com.rn5.fitnesstracker.util.Constants.sdfDate;
+import static com.rn5.fitnesstracker.util.Constants.sdfDatePattern;
+import static com.rn5.fitnesstracker.util.Constants.sdfPattern;
 import static com.rn5.fitnesstracker.util.Constants.updateList;
 
 public class StravaActivitiesExecutor {
@@ -43,7 +46,8 @@ public class StravaActivitiesExecutor {
     private final List<Integer> ftpAS = new ArrayList<>();
     private final List<Integer> ftpAL = new ArrayList<>();
     private AthleteDetail athleteDetail;
-    private Calendar activityDate;
+    private long toEpochDay;
+    private long toEpochMillis;
 
     public StravaActivitiesExecutor(EventListener eventListener) {
         this.eventListener = eventListener;
@@ -66,7 +70,8 @@ public class StravaActivitiesExecutor {
                     dt.add(Calendar.DATE,-180);
                     athlete.setLastUpdateTime(dt.getTimeInMillis());
                 }
-                activities = api.getActivities(athlete.getLastUpdateTime() / 1000, gmtDate.getTimeInMillis() / 1000).execute();
+                long after = (athlete.getLastUpdateTime() - dayInMS) / 1000;
+                activities = api.getActivities(after, gmtDate.getTimeInMillis() / 1000).execute();
             } catch (StravaAPIException e) {
                 Log.e(TAG,"StravaAPIException[" + e.getMessage() + "]");
             }
@@ -76,126 +81,136 @@ public class StravaActivitiesExecutor {
             if (activities != null) {
                 Collections.sort(activities);
                 for (Activity activity : activities) {
+                    Log.d(TAG, "Activity Type: " + activity.getType());
                     ftpAS.clear();
                     ftpAL.clear();
                     ftpMax = 0;
                     StreamAPI streamAPI = new StreamAPI(config);
-                    Stream stream = streamAPI.getStreams(activity.getId()).execute();
-
-                    Date date;
+                    Stream stream = null;
                     try {
-                        date = sdf.parse(activity.getStartDate());
-                    } catch (ParseException e) {
-                        date = new Date();
+                        stream = streamAPI.getStreams(activity.getId()).execute();
+                    } catch (StravaAPIException e) {
+                        Log.d(TAG, "Activity " + activity.getId() + "/" + activity.getName() + " does not have streams.");
                     }
 
-                    activityDate = Calendar.getInstance();
-                    activityDate.setTime(date);
-                    Log.d(TAG, "getDaysTo: " + getDaysTo(activityDate));
-                    setCurrentDetail();
-                    Log.d(TAG, athleteDetail.toString());
+                    if (stream != null) {
+
+                        LocalDate ld = LocalDate.parse(activity.getStartDate(), DateTimeFormatter.ofPattern(sdfPattern));
+                        String ldStr = ld.format(DateTimeFormatter.ofPattern(sdfDatePattern, Locale.US));
+
+                        Date date = new Date();
+                        try {
+                            date = sdf.parse(activity.getStartDateUtc());
+                        } catch (ParseException e) {
+                            Log.e(TAG, "Parse exception from Strava activity UTC start date");
+                        }
+
+                        toEpochDay = ld.toEpochDay();
+                        toEpochMillis = date.getTime();
+                        setCurrentDetail();
+
+                        Log.d(TAG, "toEpochDay: " + toEpochDay);
+                        Log.d(TAG, athleteDetail.toString());
 
 
-                    double ftp = athleteDetail.getFtp();
-                    double hrm = athleteDetail.getHrm();
-                    double hrr = athleteDetail.getHrr();
+                        double ftp = athleteDetail.getFtp();
+                        double hrm = athleteDetail.getHrm();
+                        double hrr = athleteDetail.getHrr();
 
-                    Calendar c = Calendar.getInstance();
-                    long dtMillis = athleteDetail.getDate() * dayInMS - c.getTimeZone().getRawOffset();
-                    c.setTimeInMillis(dtMillis);
-                    Log.d(TAG,"Activity Date[" + sdfDate.format(date.getTime()) + "] DATE[" + sdfDate.format(c.getTime()) +
-                            "] FTP[" + ftp + "] HRM[" + hrm + "] HRR[" + hrr + "]");
+                        Log.d(TAG, "Activity Date[" + ldStr + "] DATE[" + toEpochMillis +
+                                "] FTP[" + ftp + "] HRM[" + hrm + "] HRR[" + hrr + "]");
 
-                    //Double pst = 0d;
-                    double rollAvgPow = 0d;
-                    double powTot = 0.0d;
-                    double st = (double) activity.getMovingTime();
-                    double psc = 0d;
+                        //Double pst = 0d;
+                        double rollAvgPow = 0d;
+                        double powTot = 0.0d;
+                        double st = (double) activity.getMovingTime();
+                        double psc = 0d;
 
-                    int i = 0;
-                    if (stream.getWatts() != null) {
-                        for (Double val : stream.getWatts().getData()) {
-                            if (stream.getMoving().getData().get(i)) {
-                                if (val != null) {
-                                    setFtp((int)Math.round(val));
-                                    pow30.add(0,val);
-                                    if (pow30.size() > 30)
-                                        pow30.remove(30);
-                                    psc ++;
-                                    powTot += val;
-                                    rollAvgPow += Math.pow(getAvg30(pow30),4);
+                        int i = 0;
+                        if (stream.getWatts() != null) {
+                            for (Double val : stream.getWatts().getData()) {
+                                if (stream.getMoving().getData().get(i)) {
+                                    if (val != null) {
+                                        setFtp((int) Math.round(val));
+                                        pow30.add(0, val);
+                                        if (pow30.size() > 30)
+                                            pow30.remove(30);
+                                        psc++;
+                                        powTot += val;
+                                        rollAvgPow += Math.pow(getAvg30(pow30), 4);
+                                    }
                                 }
+                                i++;
                             }
-                            i++;
                         }
-                    }
-                    double wp = Math.pow((rollAvgPow/psc),0.25d);
-                    double intensity = wp/ftp;
-                    Log.d(TAG,"Weighted Power [" + wp + "] Intensity [" + intensity + "]");
-                    double pss = wp*(wp/ftp)*st/(ftp*3600d)*100d;
-                    Log.d(TAG,"StartDateLocal:" + date);
-                    int iPSS = (int) Math.round(pss);
-                    double powAvg = (psc > 0 ? powTot/psc : 0.0d);
+                        double wp = Math.pow((rollAvgPow / psc), 0.25d);
+                        double intensity = wp / ftp;
+                        Log.d(TAG, "Weighted Power [" + wp + "] Intensity [" + intensity + "]");
+                        double pss = wp * (wp / ftp) * st / (ftp * 3600d) * 100d;
+                        Log.d(TAG, "StartDateLocal:" + date);
+                        int iPSS = (int) Math.round(pss);
+                        double powAvg = (psc > 0 ? powTot / psc : 0.0d);
 
-                    i = 0;
-                    double hrsc = 0d;
-                    double hrR;
-                    double trimp = 0d;
-                    double hrtot = 0d;
-                    double lastT = 0d;
-                    double thisT;
-                    if (stream.getHeartrate() != null) {
-                        for (Double val : stream.getHeartrate().getData()) {
-                            thisT = stream.getTime().getData().get(i);
-                            if (val == null) {
-                                val = 0d;
+                        i = 0;
+                        double hrsc = 0d;
+                        double hrR;
+                        double trimp = 0d;
+                        double hrtot = 0d;
+                        double lastT = 0d;
+                        double thisT;
+                        if (stream.getHeartrate() != null) {
+                            for (Double val : stream.getHeartrate().getData()) {
+                                thisT = stream.getTime().getData().get(i);
+                                if (val == null) {
+                                    val = 0d;
+                                }
+                                hrm = Math.max(hrm, val);
+                                hrMax = (int) Math.max(hrMax, val);
+                                hrtot += val;
+                                hrsc++;
+                                hrR = (val - hrr) / (hrm - hrr);
+                                trimp += (thisT - lastT) / 60d * hrR * 0.64d * Math.exp(1.92d * hrR);
+                                lastT = thisT;
+                                i++;
                             }
-                            hrm = Math.max(hrm, val);
-                            hrMax = (int)Math.max(hrMax, val);
-                            hrtot += val;
-                            hrsc ++;
-                            hrR = (val-hrr)/(hrm-hrr);
-                            trimp += (thisT-lastT)/60d*hrR*0.64d*Math.exp(1.92d*hrR);
-                            lastT = thisT;
-                            i++;
                         }
-                    }
-                    double hravg = (hrsc > 0 ? hrtot/hrsc : 0.0d);
-                    //hrr = (hravg-hrr)/(hrm-hrr);
-                    //trimp = (st/60d)*hrr*0.64d*Math.exp(1.92d*hrr);
-                    double hrss = (int) (trimp/getHRatLTHR()*100d);
-                    int iHRSS = (int) Math.round(hrss);
-                    Log.d(TAG,"TRIMP [" + trimp + "] HRSS [" + hrss + "] HRAvg[" + hravg + "]");
+                        double hravg = (hrsc > 0 ? hrtot / hrsc : 0.0d);
+                        //hrr = (hravg-hrr)/(hrm-hrr);
+                        //trimp = (st/60d)*hrr*0.64d*Math.exp(1.92d*hrr);
+                        double hrss = (int) (trimp / getHRatLTHR() * 100d);
+                        int iHRSS = (int) Math.round(hrss);
+                        Log.d(TAG, "TRIMP [" + trimp + "] HRSS [" + hrss + "] HRAvg[" + hravg + "]");
 
-                    double distance = 0.0d;
-                    if (stream.getDistance() != null) {
-                        for (Double val : stream.getDistance().getData()) {
-                            if (val == null) {
-                                val = 0d;
+                        double distance = 0.0d;
+                        if (stream.getDistance() != null) {
+                            for (Double val : stream.getDistance().getData()) {
+                                if (val == null) {
+                                    val = 0d;
+                                }
+                                distance = Math.max(distance, val);
                             }
-                            distance = Math.max(distance, val);
                         }
-                    }
 
-                    StravaActivity stravaActivity = new StravaActivity(activity.getId())
-                            .withPss(iPSS)
-                            .withHrss(iHRSS)
-                            .withDate(date.getTime());
-                    stravaActivity.setPwrFtp(ftpMax);
-                    stravaActivity.setDistance(distance);
-                    stravaActivity.setMovingTime(activity.getMovingTime());
-                    stravaActivity.setHrAvg((int) hravg);
-                    stravaActivity.setPwrAvg((int) powAvg);
-                    stravaActivity.setActivityType(activity.getType());
-                    updateList(athlete.getActivityList(), stravaActivity);
-                    Log.e("PSS","PSS[" + iPSS + "]");
-                    if (ftpMax > 0) {
-                        athlete.getFtpList().add(new Ftp()
-                                .withFtp(ftpMax)
-                                .withHr(hrMax)
-                                .withDate(getDaysTo(activityDate)));
+                        StravaActivity stravaActivity = new StravaActivity(activity.getId())
+                                .withPss(iPSS)
+                                .withHrss(iHRSS)
+                                .withDate(toEpochDay);
+                        stravaActivity.setPwrFtp(ftpMax);
+                        stravaActivity.setDistance(distance);
+                        stravaActivity.setMovingTime(activity.getMovingTime());
+                        stravaActivity.setHrAvg((int) hravg);
+                        stravaActivity.setPwrAvg((int) powAvg);
+                        stravaActivity.setActivityType(activity.getType());
+                        updateList(athlete.getActivityList(), stravaActivity);
+                        Log.e("PSS", "PSS[" + iPSS + "]");
+                        if (ftpMax > 0) {
+                            athlete.getFtpList().add(new Ftp()
+                                    .withFtp(ftpMax)
+                                    .withHr(hrMax)
+                                    .withDate(toEpochDay));
+                        }
+                        checkFtp();
                     }
-                    checkFtp();
                 }
             }
 
@@ -204,27 +219,20 @@ public class StravaActivitiesExecutor {
     }
 
     private void setCurrentDetail() {
-        long d = getDaysTo(activityDate);
-
         athlete.getDetailList().sort(Comparator.reverseOrder());
         AthleteDetail tmpAthleteDetail = athlete.getDetailList().get(0);
-        if (d - tmpAthleteDetail.getDate() <= ftpDays)
+        if (toEpochDay - tmpAthleteDetail.getId() <= ftpDays)
             athleteDetail = tmpAthleteDetail;
         else
             calculateAthleteDetail();
     }
 
     private void calculateAthleteDetail() {
-        long millis = activityDate.getTimeInMillis();
-        Calendar ftpC = Calendar.getInstance();
-        ftpC.setTimeInMillis(millis);
-        ftpC.add(Calendar.DATE, -ftpDays);
-        long ftpD = getDaysTo(ftpC);
-
+        long ftpD = toEpochDay - ftpDays;
         int maxFtp = 150;
         int maxHr = determineMaxHR();
         int restHr = 65;
-        long maxFtpDt = getDaysTo(activityDate);
+        long maxFtpDt = toEpochDay;
 
         for (Ftp f : athlete.getFtpList()) {
             if (f.getDate() >= ftpD && maxFtp < f.getFtp()) {
@@ -233,7 +241,7 @@ public class StravaActivitiesExecutor {
             }
         }
 
-        athleteDetail = new AthleteDetail(maxFtp, maxHr, restHr, maxFtpDt, maxFtpDt);
+        athleteDetail = new AthleteDetail(maxFtp, maxHr, restHr, maxFtpDt);
         updateList(athlete.getDetailList(), athleteDetail);
     }
 
@@ -243,11 +251,7 @@ public class StravaActivitiesExecutor {
         int currentYear = c.get(Calendar.YEAR);
         int max = (220-(currentYear-birthYear));
 
-        long millis = activityDate.getTimeInMillis();
-        Calendar hrC = Calendar.getInstance();
-        hrC.setTimeInMillis(millis);
-        hrC.add(Calendar.DATE, -hrDays);
-        long hrD = getDaysTo(hrC);
+        long hrD = toEpochDay - hrDays;
         for (Ftp f : athlete.getFtpList()) {
             if (f.getDate() >= hrD)
                 max = Math.max(max, f.getHr());
@@ -264,11 +268,11 @@ public class StravaActivitiesExecutor {
                 update = true;
             }
             if (athleteDetail.getFtp() < ftpMax) {
-                long id = getDaysTo(activityDate);
-                if (athleteDetail.getDate() == id)
+                long id = toEpochDay;
+                if (athleteDetail.getId() == id)
                     athleteDetail.setFtp(ftpMax);
                 else
-                    athleteDetail = new AthleteDetail(ftpMax, hrm, athleteDetail.getHrr(), id, id);
+                    athleteDetail = new AthleteDetail(ftpMax, hrm, athleteDetail.getHrr(), id);
                 update = true;
             }
             if (update)

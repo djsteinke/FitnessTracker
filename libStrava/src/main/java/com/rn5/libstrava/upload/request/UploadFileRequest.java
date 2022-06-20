@@ -74,15 +74,15 @@ public class UploadFileRequest {
     }
 
     public UploadStatus execute() {
-        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+        RequestBody requestFile = RequestBody.create(file, MediaType.parse("multipart/form-data"));
 
         MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
         this.fileType = (fileType == null?FileType.FIT:fileType);
         this.activityType = (activityType == null?UploadActivityType.RIDE:activityType);
-        this.isCommute = (isCommute == null?false:isCommute);
-        this.hasTrainer = (hasTrainer == null?false:hasTrainer);
-        this.isPrivate = (isPrivate == null?false:isPrivate);
+        this.isCommute = (isCommute != null && isCommute);
+        this.hasTrainer = (hasTrainer != null && hasTrainer);
+        this.isPrivate = (isPrivate != null && isPrivate);
         this.description = (description == null?"":description);
 
         Call<UploadStatus> call = restService.upload(
@@ -99,15 +99,15 @@ public class UploadFileRequest {
     }
 
     public StravaResponse<UploadStatus> executeWithResponse() {
-        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+        RequestBody requestFile = RequestBody.create(file, MediaType.parse("multipart/form-data"));
 
         MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
         this.fileType = (fileType == null?FileType.FIT:fileType);
         this.activityType = (activityType == null?UploadActivityType.RIDE:activityType);
-        this.isCommute = (isCommute == null?false:isCommute);
-        this.hasTrainer = (hasTrainer == null?false:hasTrainer);
-        this.isPrivate = (isPrivate == null?false:isPrivate);
+        this.isCommute = (isCommute != null && isCommute);
+        this.hasTrainer = (hasTrainer != null && hasTrainer);
+        this.isPrivate = (isPrivate != null && isPrivate);
         this.description = (description == null?"":description);
 
         Call<UploadStatus> call = restService.upload(
@@ -124,7 +124,7 @@ public class UploadFileRequest {
     }
 
     private RequestBody requestBodyFromString(String str) {
-        return RequestBody.create(MultipartBody.FORM, str);
+        return RequestBody.create(str, MultipartBody.FORM);
     }
 
     private Integer booleanToInt(boolean b) {

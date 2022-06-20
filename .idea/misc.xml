@@ -8,11 +8,17 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/drawable/ic_icon.xml" value="0.21354166666666666" />
+        <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.21354166666666666" />
+        <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/layout/activity_athlete_details.xml" value="0.25" />
+        <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/layout/activity_training_load.xml" value="0.1" />
         <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/layout/fitness_day.xml" value="0.25" />
+        <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/menu/main_menu.xml" value="0.19010416666666666" />
+        <entry key="..\:/MyData/Program Files/Android/AndroidStudioProjects/FitnessTracker/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.21354166666666666" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

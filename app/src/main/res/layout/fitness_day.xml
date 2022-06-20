@@ -33,6 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/pss"
+        android:visibility="gone"
         android:textColor="@color/gray"/>
     <TextView
         android:id="@+id/pss_value"
@@ -51,6 +52,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hrss"
+        android:visibility="gone"
         android:textColor="@color/gray"/>
     <TextView
         android:id="@+id/hrss_value"
@@ -116,10 +118,97 @@
         android:textSize="14sp"
         android:textColor="@color/form"/>
     <LinearLayout
-        android:id="@+id/ll_data"
+        android:id="@+id/ll_activities"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/fit_title"
+        android:textSize="14sp"
+        android:textColor="@color/gray"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/ll_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minWidth="30dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="@string/type"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minWidth="40dp"
+            android:layout_marginStart="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="@string/time"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_power"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minWidth="30dp"
+            android:layout_marginStart="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="@string/power"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_hr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minWidth="30dp"
+            android:layout_marginStart="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="@string/hr"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_pss"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minWidth="20dp"
+            android:layout_marginStart="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="@string/pss"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_hrss"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minWidth="20dp"
+            android:layout_marginStart="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:text="@string/hrss"/>
+        </LinearLayout>
+
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/ll_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/ll_activities"
         android:textSize="14sp"
         android:textColor="@color/gray"
         android:visibility="gone"

@@ -15,6 +15,7 @@ public class Activity implements Comparable<Activity> {
     @SerializedName("upload_id") private Long uploadId;
     @SerializedName("device_watts") private Boolean deviceWatts;
     @SerializedName("has_heartrate") private Boolean hasHeartrate;
+    @SerializedName("start_date") private String startDateUtc;
     @SerializedName("start_date_local") private String startDate;
     @SerializedName("moving_time") private Integer movingTime;
     @SerializedName("type") private String type;

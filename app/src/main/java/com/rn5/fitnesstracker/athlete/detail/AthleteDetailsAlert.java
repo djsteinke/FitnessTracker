@@ -17,6 +17,9 @@ import com.rn5.fitnesstracker.R;
 import com.rn5.fitnesstracker.util.DatePickerAlert;
 
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -24,6 +27,7 @@ import static com.rn5.fitnesstracker.MainActivity.athlete;
 import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
 import static com.rn5.fitnesstracker.util.Constants.dayMs;
 import static com.rn5.fitnesstracker.util.Constants.sdfDate;
+import static com.rn5.fitnesstracker.util.Constants.sdfDatePattern;
 
 public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
     private static final String TAG = AthleteDetailsAlert.class.getSimpleName();
@@ -75,10 +79,8 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
             etFtp.setText(String.valueOf(athleteDetail.getFtp()));
             etHrm.setText(String.valueOf(athleteDetail.getHrm()));
             etHrr.setText(String.valueOf(athleteDetail.getHrr()));
-            Calendar c = Calendar.getInstance();
-            long dtMs = athleteDetail.getDate()*dayMs - c.getTimeZone().getRawOffset();
-            Date date = new Date(dtMs);
-            etDate.setText(sdfDate.format(date));
+            LocalDate ld = LocalDate.ofEpochDay(athleteDetail.getId());
+            etDate.setText(ld.format(DateTimeFormatter.ofPattern(sdfDatePattern)));
             auto.setChecked(athleteDetail.isAuto());
         }
 
@@ -117,7 +119,6 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
                                 athleteDetail.setFtp(Integer.parseInt(etFtp.getText().toString()));
                                 athleteDetail.setHrm(Integer.parseInt(etHrm.getText().toString()));
                                 athleteDetail.setHrr(Integer.parseInt(etHrr.getText().toString()));
-                                athleteDetail.setDate(getDaysTo(cal));
                                 athleteDetail.setAuto(auto.isChecked());
                                 athlete.updateAthleteDetail(athleteDetail);
                             } else {
@@ -125,7 +126,6 @@ public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
                                         Integer.parseInt(etFtp.getText().toString()),
                                         Integer.parseInt(etHrm.getText().toString()),
                                         Integer.parseInt(etHrr.getText().toString()),
-                                        getDaysTo(cal),
                                         getDaysTo(cal)).isAuto(auto.isChecked());
                                 athlete.addAthleteDetail(detail);
                             }

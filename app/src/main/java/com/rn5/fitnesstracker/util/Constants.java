@@ -1,6 +1,8 @@
 package com.rn5.fitnesstracker.util;
 
+import android.content.Context;
 import android.icu.text.SimpleDateFormat;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.LongSparseArray;
 
@@ -25,9 +27,17 @@ public class Constants {
 
     public static StravaToken STRAVA_TOKEN;
 
-    public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+    public static final String sdfPattern = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final SimpleDateFormat sdf = new SimpleDateFormat(sdfPattern, Locale.US);
 
-    public static final SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+    public static final String sdfPatternTest = "yyyy-MM-dd HH:mm:ss";
+    public static final SimpleDateFormat sdfDateTest = new SimpleDateFormat(sdfPatternTest, Locale.US);
+    public static final String sdfPatternTestZ = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final SimpleDateFormat sdfDateTestZ = new SimpleDateFormat(sdfPatternTestZ, Locale.US);
+
+    public static final String sdfDatePattern = "yyyy-MM-dd";
+    public static final SimpleDateFormat sdfDate = new SimpleDateFormat(sdfDatePattern, Locale.US);
     public static final long dayMs = 86400000;
 
     public static <C> List<C> asList(LongSparseArray<C> sparseArray) {
@@ -118,5 +128,9 @@ public class Constants {
             time += "0";
         time += String.valueOf(sec);
         return time;
+    }
+
+    public static float getPxFromDp(float dp, Context context){
+        return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 }

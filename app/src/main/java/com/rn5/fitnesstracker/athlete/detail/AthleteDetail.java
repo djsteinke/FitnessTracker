@@ -10,7 +10,6 @@ import lombok.ToString;
 public class AthleteDetail implements Comparable<AthleteDetail> {
 
     private long id;
-    private long date;
     private int ftp;
     private int hrm;
     private int hrr;
@@ -18,12 +17,11 @@ public class AthleteDetail implements Comparable<AthleteDetail> {
 
     public AthleteDetail() {}
 
-    public AthleteDetail(int ftp, int hrm, int hrr, long date, long id) {
+    public AthleteDetail(int ftp, int hrm, int hrr, long id) {
         this.id = id;
         this.ftp = ftp;
         this.hrm = hrm;
         this.hrr = hrr;
-        this.date = date;
     }
 
     public AthleteDetail isAuto(boolean auto) {

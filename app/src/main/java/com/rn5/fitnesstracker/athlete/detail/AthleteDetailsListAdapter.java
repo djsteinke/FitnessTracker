@@ -9,6 +9,9 @@ import android.widget.TextView;
 
 import com.rn5.fitnesstracker.R;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -18,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import static com.rn5.fitnesstracker.MainActivity.dayInMS;
 import static com.rn5.fitnesstracker.util.Constants.sdfDate;
+import static com.rn5.fitnesstracker.util.Constants.sdfDatePattern;
 
 public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetailsListAdapter.MyViewHolder> implements AthleteDetailsListener {
     private static final String TAG = AthleteDetailsListAdapter.class.getSimpleName();
@@ -82,13 +86,18 @@ public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetai
         TextView hrMax = vItem.findViewById(R.id.hr_max_value);
         TextView auto = vItem.findViewById(R.id.auto_value);
 
+        /* TODO
         Calendar c = Calendar.getInstance();
         long dtMillis = mDataset.get(position).getDate() * dayInMS - c.getTimeZone().getRawOffset();
         c.setTimeInMillis(dtMillis);
 
+
+         */
+        String dt = LocalDate.ofEpochDay(mDataset.get(position).getId()).format(DateTimeFormatter.ofPattern(sdfDatePattern));
+
         auto.setText(mDataset.get(position).isAuto()?"Auto":"");
 
-        date.setText(sdfDate.format(c.getTime()));
+        date.setText(dt);
         ftp.setText(String.valueOf(mDataset.get(position).getFtp()));
         hrMin.setText(String.valueOf(mDataset.get(position).getHrr()));
         hrMax.setText(String.valueOf(mDataset.get(position).getHrm()));

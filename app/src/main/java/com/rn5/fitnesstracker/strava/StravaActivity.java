@@ -24,6 +24,7 @@ public class StravaActivity {
         this.pss = ftpEffort;
         return this;
     }
+
     public StravaActivity withHrss(Integer hrEffort) {
         this.hrss = hrEffort;
         return this;

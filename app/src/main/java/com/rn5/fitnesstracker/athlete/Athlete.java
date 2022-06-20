@@ -46,7 +46,7 @@ public class Athlete {
         int i = 0;
         if (detailList.size() > 0) {
             for (AthleteDetail detail : detailList) {
-                if (detail.getDate() < athleteDetail.getDate()) {
+                if (detail.getId() < athleteDetail.getId()) {
                     break;
                 }
                 i++;
@@ -108,7 +108,7 @@ public class Athlete {
             Athlete data = new Athlete();
             Calendar c = Calendar.getInstance();
             c.add(Calendar.YEAR, -1);
-            data.getDetailList().add(new AthleteDetail(100, 182, 65, getDaysTo(c), getDaysTo(c)));
+            data.getDetailList().add(new AthleteDetail(100, 182, 65, getDaysTo(c)));
             return data;
         } catch (Exception e) {
             return null;
