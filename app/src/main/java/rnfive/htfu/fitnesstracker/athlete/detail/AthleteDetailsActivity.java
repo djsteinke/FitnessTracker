@@ -1,18 +1,18 @@
-package com.rn5.fitnesstracker.athlete.detail;
+package rnfive.htfu.fitnesstracker.athlete.detail;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.rn5.fitnesstracker.R;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import rnfive.htfu.fitnesstracker.R;
 
-import static com.rn5.fitnesstracker.MainActivity.athlete;
-import static com.rn5.fitnesstracker.MainActivity.bDarkMode;
+import static rnfive.htfu.fitnesstracker.MainActivity.athlete;
+import static rnfive.htfu.fitnesstracker.MainActivity.bDarkMode;
 
 public class AthleteDetailsActivity extends AppCompatActivity implements AthleteDetailsListener {
 

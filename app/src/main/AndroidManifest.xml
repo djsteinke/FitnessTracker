@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.rn5.fitnesstracker">
+    package="rnfive.htfu.fitnesstracker">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -11,16 +11,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
+        <activity android:name="rnfive.htfu.fitnesstracker.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".strava.StravaLogin"/>
-        <activity android:name=".athlete.detail.AthleteDetailsActivity"/>
-        <activity android:name=".TrainingLoadActivity"/>
+        <activity android:name="rnfive.htfu.fitnesstracker.strava.StravaLogin"/>
+        <activity android:name="rnfive.htfu.fitnesstracker.athlete.detail.AthleteDetailsActivity"/>
+        <activity android:name="rnfive.htfu.fitnesstracker.TrainingLoadActivity"/>
     </application>
 
 </manifest>

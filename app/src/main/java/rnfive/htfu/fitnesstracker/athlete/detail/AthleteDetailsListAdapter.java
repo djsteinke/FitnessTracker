@@ -1,27 +1,21 @@
-package com.rn5.fitnesstracker.athlete.detail;
+package rnfive.htfu.fitnesstracker.athlete.detail;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.rn5.fitnesstracker.R;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import rnfive.htfu.fitnesstracker.R;
 
-import static com.rn5.fitnesstracker.MainActivity.dayInMS;
-import static com.rn5.fitnesstracker.util.Constants.sdfDate;
-import static com.rn5.fitnesstracker.util.Constants.sdfDatePattern;
+import static rnfive.htfu.fitnesstracker.util.Constants.sdfDatePattern;
 
 public class AthleteDetailsListAdapter extends RecyclerView.Adapter<AthleteDetailsListAdapter.MyViewHolder> implements AthleteDetailsListener {
     private static final String TAG = AthleteDetailsListAdapter.class.getSimpleName();

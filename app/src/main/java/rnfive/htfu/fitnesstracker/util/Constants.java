@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.util;
+package rnfive.htfu.fitnesstracker.util;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
@@ -8,7 +8,7 @@ import android.util.LongSparseArray;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.rn5.fitnesstracker.strava.StravaToken;
+import rnfive.htfu.fitnesstracker.strava.StravaToken;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

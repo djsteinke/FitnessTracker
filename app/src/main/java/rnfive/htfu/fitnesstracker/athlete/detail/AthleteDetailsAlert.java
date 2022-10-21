@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.athlete.detail;
+package rnfive.htfu.fitnesstracker.athlete.detail;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,21 +13,19 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
-import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.util.DatePickerAlert;
+import rnfive.htfu.fitnesstracker.R;
+import rnfive.htfu.fitnesstracker.util.DatePickerAlert;
 
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 
-import static com.rn5.fitnesstracker.MainActivity.athlete;
-import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
-import static com.rn5.fitnesstracker.util.Constants.dayMs;
-import static com.rn5.fitnesstracker.util.Constants.sdfDate;
-import static com.rn5.fitnesstracker.util.Constants.sdfDatePattern;
+import static rnfive.htfu.fitnesstracker.MainActivity.athlete;
+import static rnfive.htfu.fitnesstracker.MainActivity.getDaysTo;
+import static rnfive.htfu.fitnesstracker.util.Constants.sdfDate;
+import static rnfive.htfu.fitnesstracker.util.Constants.sdfDatePattern;
 
 public class AthleteDetailsAlert implements DatePickerDialog.OnDateSetListener {
     private static final String TAG = AthleteDetailsAlert.class.getSimpleName();

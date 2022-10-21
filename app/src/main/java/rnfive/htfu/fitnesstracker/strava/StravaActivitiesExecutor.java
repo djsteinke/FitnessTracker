@@ -1,12 +1,12 @@
-package com.rn5.fitnesstracker.strava;
+package rnfive.htfu.fitnesstracker.strava;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.rn5.fitnesstracker.util.EventListener;
-import com.rn5.fitnesstracker.athlete.fitness.Ftp;
-import com.rn5.fitnesstracker.athlete.detail.AthleteDetail;
+import rnfive.htfu.fitnesstracker.util.EventListener;
+import rnfive.htfu.fitnesstracker.athlete.fitness.Ftp;
+import rnfive.htfu.fitnesstracker.athlete.detail.AthleteDetail;
 import com.rn5.libstrava.activities.api.ActivityAPI;
 import com.rn5.libstrava.activities.model.Activity;
 import com.rn5.libstrava.common.api.StravaConfig;
@@ -28,12 +28,12 @@ import java.util.TimeZone;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import static com.rn5.fitnesstracker.MainActivity.athlete;
-import static com.rn5.fitnesstracker.MainActivity.dayInMS;
-import static com.rn5.fitnesstracker.util.Constants.sdf;
-import static com.rn5.fitnesstracker.util.Constants.sdfDatePattern;
-import static com.rn5.fitnesstracker.util.Constants.sdfPattern;
-import static com.rn5.fitnesstracker.util.Constants.updateList;
+import static rnfive.htfu.fitnesstracker.MainActivity.athlete;
+import static rnfive.htfu.fitnesstracker.MainActivity.dayInMS;
+import static rnfive.htfu.fitnesstracker.util.Constants.sdf;
+import static rnfive.htfu.fitnesstracker.util.Constants.sdfDatePattern;
+import static rnfive.htfu.fitnesstracker.util.Constants.sdfPattern;
+import static rnfive.htfu.fitnesstracker.util.Constants.updateList;
 
 public class StravaActivitiesExecutor {
 

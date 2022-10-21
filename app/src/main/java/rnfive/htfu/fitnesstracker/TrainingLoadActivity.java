@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker;
+package rnfive.htfu.fitnesstracker;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -13,8 +13,8 @@ import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
-import com.rn5.fitnesstracker.athlete.fitness.Fitness;
-import com.rn5.fitnesstracker.strava.StravaActivity;
+import rnfive.htfu.fitnesstracker.athlete.fitness.Fitness;
+import rnfive.htfu.fitnesstracker.strava.StravaActivity;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -26,9 +26,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import lombok.Getter;
 import lombok.ToString;
 
-import static com.rn5.fitnesstracker.MainActivity.bDarkMode;
-import static com.rn5.fitnesstracker.MainActivity.athlete;
-import static com.rn5.fitnesstracker.util.Constants.getPxFromDp;
+import static rnfive.htfu.fitnesstracker.MainActivity.bDarkMode;
+import static rnfive.htfu.fitnesstracker.MainActivity.athlete;
+import static rnfive.htfu.fitnesstracker.util.Constants.getPxFromDp;
 
 public class TrainingLoadActivity extends AppCompatActivity {
 

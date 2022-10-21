@@ -1,7 +1,6 @@
-package com.rn5.fitnesstracker.athlete.fitness;
+package rnfive.htfu.fitnesstracker.athlete.fitness;
 
 import android.content.Context;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
@@ -11,29 +10,21 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.rn5.fitnesstracker.R;
-import com.rn5.fitnesstracker.strava.StravaActivity;
+import rnfive.htfu.fitnesstracker.R;
+import rnfive.htfu.fitnesstracker.strava.StravaActivity;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import androidx.annotation.NonNull;
 
-import static com.rn5.fitnesstracker.MainActivity.athlete;
-import static com.rn5.fitnesstracker.MainActivity.bDarkMode;
-import static com.rn5.fitnesstracker.MainActivity.dayInMS;
-import static com.rn5.fitnesstracker.util.Constants.mToMi;
-import static com.rn5.fitnesstracker.util.Constants.sToTime;
+import static rnfive.htfu.fitnesstracker.MainActivity.athlete;
+import static rnfive.htfu.fitnesstracker.MainActivity.bDarkMode;
+import static rnfive.htfu.fitnesstracker.util.Constants.sToTime;
 
 public class FitnessListAdapter extends RecyclerView.Adapter<FitnessListAdapter.MyViewHolder> {
     private static final String TAG = FitnessListAdapter.class.getSimpleName();

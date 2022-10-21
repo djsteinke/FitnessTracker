@@ -1,8 +1,18 @@
-package com.rn5.fitnesstracker;
+package rnfive.htfu.fitnesstracker;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import rnfive.htfu.fitnesstracker.athlete.detail.AthleteDetailsActivity;
+import rnfive.htfu.fitnesstracker.athlete.fitness.Fitness;
+import rnfive.htfu.fitnesstracker.athlete.fitness.FitnessListAdapter;
+import rnfive.htfu.fitnesstracker.strava.StravaActivitiesExecutor;
+import rnfive.htfu.fitnesstracker.strava.StravaActivity;
+import rnfive.htfu.fitnesstracker.strava.StravaAuthenticationExecutor;
+import rnfive.htfu.fitnesstracker.strava.StravaLogin;
+import rnfive.htfu.fitnesstracker.strava.StravaToken;
+import rnfive.htfu.fitnesstracker.util.Constants;
+import rnfive.htfu.fitnesstracker.util.EventListener;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -27,16 +37,8 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
-import com.rn5.fitnesstracker.athlete.detail.AthleteDetailsActivity;
-import com.rn5.fitnesstracker.util.EventListener;
-import com.rn5.fitnesstracker.athlete.fitness.FitnessListAdapter;
-import com.rn5.fitnesstracker.strava.StravaActivitiesExecutor;
-import com.rn5.fitnesstracker.strava.StravaAuthenticationExecutor;
-import com.rn5.fitnesstracker.athlete.Athlete;
-import com.rn5.fitnesstracker.athlete.fitness.Fitness;
-import com.rn5.fitnesstracker.strava.StravaActivity;
-import com.rn5.fitnesstracker.strava.StravaLogin;
-import com.rn5.fitnesstracker.strava.StravaToken;
+import rnfive.htfu.fitnesstracker.athlete.Athlete;
+
 import com.rn5.libstrava.authentication.model.AuthenticationType;
 
 import java.text.ParseException;
@@ -48,7 +50,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import static com.rn5.fitnesstracker.util.Constants.*;
 import static com.rn5.libstrava.common.model.Constants.TOKEN;
 
 public class MainActivity extends AppCompatActivity implements EventListener {
@@ -82,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
         setContentView(R.layout.activity_main);
 
         setFilePath();
-        STRAVA_TOKEN = new StravaToken().fromFile();
+        Constants.STRAVA_TOKEN = new StravaToken().fromFile();
         athlete = Athlete.loadFromFile();
         //cleanup();
         processAthleteData(true);
@@ -427,18 +428,18 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             Paint paintS = new Paint();
             paintS.setStyle(Paint.Style.STROKE);
             paintS.setColor(getColor((bDarkMode ? R.color.white : R.color.black)));
-            paintS.setStrokeWidth(getPxFromDp(1.0f, this));
+            paintS.setStrokeWidth(Constants.getPxFromDp(1.0f, this));
 
             Paint paintC = new Paint();
             paintC.setStyle(Paint.Style.STROKE);
             paintC.setColor(getColor(R.color.white));
-            paintC.setStrokeWidth(getPxFromDp(1.0f, this));
+            paintC.setStrokeWidth(Constants.getPxFromDp(1.0f, this));
 
             Paint paintG = new Paint();
             paintG.setStyle(Paint.Style.STROKE);
             paintG.setAlpha(50);
             paintG.setColor(getColor(R.color.gray));
-            paintG.setStrokeWidth(getPxFromDp(0.5f, this));
+            paintG.setStrokeWidth(Constants.getPxFromDp(0.5f, this));
             paintG.setTextSize(h10 * 0.8f);
 
             Paint paintT = new Paint();
@@ -451,7 +452,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             Paint paintF = new Paint();
             paintF.setStyle(Paint.Style.STROKE);
             paintF.setAlpha(100);
-            paintF.setStrokeWidth(getPxFromDp(0.8f, this));
+            paintF.setStrokeWidth(Constants.getPxFromDp(0.8f, this));
 
             // Draw horizontal lines
             Path hLine;
@@ -582,7 +583,7 @@ public class MainActivity extends AppCompatActivity implements EventListener {
             fitnessCurves.drawPath(fmLine, paintF);
             paintF.setColor(getColor(R.color.fitness));
             paintF.setAlpha(255);
-            paintF.setStrokeWidth(getPxFromDp(1.5f, this));
+            paintF.setStrokeWidth(Constants.getPxFromDp(1.5f, this));
             fitnessCurves.drawPath(ftLine, paintF);
 
             ivFitnessCurve.setImageBitmap(bitmap);
@@ -638,11 +639,11 @@ public class MainActivity extends AppCompatActivity implements EventListener {
     }
 
     private void setFilePath() {
-        APP_FILE_PATH = this.getExternalFilesDir("Fitness Tracker");
+        Constants.APP_FILE_PATH = this.getExternalFilesDir("Fitness Tracker");
 
-        boolean result = APP_FILE_PATH != null;
-        result = APP_FILE_PATH != null?APP_FILE_PATH.exists()||APP_FILE_PATH.mkdir():result;
-        result = result?APP_FILE_PATH.canWrite()||APP_FILE_PATH.setWritable(true, true):result;
+        boolean result = Constants.APP_FILE_PATH != null;
+        result = Constants.APP_FILE_PATH != null? Constants.APP_FILE_PATH.exists()|| Constants.APP_FILE_PATH.mkdir():result;
+        result = result? Constants.APP_FILE_PATH.canWrite()|| Constants.APP_FILE_PATH.setWritable(true, true):result;
         Log.d(TAG,"setFilePath[" + result + "]");
     }
 

@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.strava;
+package rnfive.htfu.fitnesstracker.strava;
 
 import com.google.gson.annotations.SerializedName;
 

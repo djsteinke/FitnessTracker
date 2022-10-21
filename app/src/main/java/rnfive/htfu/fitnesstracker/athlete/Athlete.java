@@ -1,13 +1,13 @@
-package com.rn5.fitnesstracker.athlete;
+package rnfive.htfu.fitnesstracker.athlete;
 
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.rn5.fitnesstracker.athlete.detail.AthleteDetail;
-import com.rn5.fitnesstracker.athlete.fitness.Ftp;
-import com.rn5.fitnesstracker.athlete.fitness.Fitness;
-import com.rn5.fitnesstracker.strava.StravaActivity;
+import rnfive.htfu.fitnesstracker.athlete.detail.AthleteDetail;
+import rnfive.htfu.fitnesstracker.athlete.fitness.Ftp;
+import rnfive.htfu.fitnesstracker.athlete.fitness.Fitness;
+import rnfive.htfu.fitnesstracker.strava.StravaActivity;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,13 +18,8 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import static com.rn5.fitnesstracker.MainActivity.fitnessArray;
-import static com.rn5.fitnesstracker.MainActivity.getDaysTo;
-import static com.rn5.fitnesstracker.util.Constants.APP_FILE_PATH;
-import static com.rn5.fitnesstracker.util.Constants.getObjectFromJsonString;
-import static com.rn5.fitnesstracker.util.Constants.loadFile;
-import static com.rn5.fitnesstracker.util.Constants.saveFile;
+import rnfive.htfu.fitnesstracker.MainActivity;
+import rnfive.htfu.fitnesstracker.util.Constants;
 
 @Getter
 @Setter
@@ -79,9 +74,9 @@ public class Athlete {
 
     public void updateFitnessList() {
         List<Fitness> list = new ArrayList<>();
-        for(int i = 0; i < fitnessArray.size(); i++) {
-            long key = fitnessArray.keyAt(i);
-            Fitness obj = fitnessArray.get(key);
+        for(int i = 0; i < MainActivity.fitnessArray.size(); i++) {
+            long key = MainActivity.fitnessArray.keyAt(i);
+            Fitness obj = MainActivity.fitnessArray.get(key);
             list.add(obj);
         }
         this.fitnessList = list;
@@ -93,7 +88,7 @@ public class Athlete {
         try {
             Gson gson = new GsonBuilder().create();
             String val = gson.toJson(this);
-            saveFile(APP_FILE_PATH, FILE_NAME, val);
+            Constants.saveFile(Constants.APP_FILE_PATH, FILE_NAME, val);
         } catch (IOException e) {
             Log.e("AthleteData","SAVE FAILED : " + e.getMessage());
         }
@@ -101,14 +96,14 @@ public class Athlete {
 
     public static Athlete loadFromFile() {
         try {
-            String val = loadFile(APP_FILE_PATH, FILE_NAME);
-            return getObjectFromJsonString(val, Athlete.class);
+            String val = Constants.loadFile(Constants.APP_FILE_PATH, FILE_NAME);
+            return Constants.getObjectFromJsonString(val, Athlete.class);
         } catch (FileNotFoundException e) {
             Log.e(TAG, "loadFromFile() FileNotFoundException");
             Athlete data = new Athlete();
             Calendar c = Calendar.getInstance();
             c.add(Calendar.YEAR, -1);
-            data.getDetailList().add(new AthleteDetail(100, 182, 65, getDaysTo(c)));
+            data.getDetailList().add(new AthleteDetail(100, 182, 65, MainActivity.getDaysTo(c)));
             return data;
         } catch (Exception e) {
             return null;

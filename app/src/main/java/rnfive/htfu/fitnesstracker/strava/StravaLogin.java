@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.strava;
+package rnfive.htfu.fitnesstracker.strava;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -8,12 +8,12 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.rn5.fitnesstracker.R;
+import rnfive.htfu.fitnesstracker.R;
 import com.rn5.libstrava.authentication.model.AuthenticationType;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import static com.rn5.fitnesstracker.MainActivity.bDarkMode;
+import static rnfive.htfu.fitnesstracker.MainActivity.bDarkMode;
 import static com.rn5.libstrava.common.model.Constants.STRAVA_CODE;
 import static com.rn5.libstrava.common.model.Constants.STRAVA_CLIENT_ID_STRING;
 

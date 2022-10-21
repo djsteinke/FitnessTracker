@@ -1,8 +1,8 @@
-package com.rn5.fitnesstracker.strava;
+package rnfive.htfu.fitnesstracker.strava;
 
 import android.util.Log;
 
-import com.rn5.fitnesstracker.util.Json;
+import rnfive.htfu.fitnesstracker.util.Json;
 import com.rn5.libstrava.common.model.Token;
 
 import org.json.JSONObject;
@@ -14,7 +14,7 @@ import java.io.FileWriter;
 
 import lombok.Data;
 
-import static com.rn5.fitnesstracker.util.Constants.APP_FILE_PATH;
+import static rnfive.htfu.fitnesstracker.util.Constants.APP_FILE_PATH;
 import static com.rn5.libstrava.common.model.Constants.TOKEN;
 
 @Data

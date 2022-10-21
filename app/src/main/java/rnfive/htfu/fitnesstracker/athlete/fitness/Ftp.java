@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.athlete.fitness;
+package rnfive.htfu.fitnesstracker.athlete.fitness;
 
 import lombok.Getter;
 import lombok.Setter;

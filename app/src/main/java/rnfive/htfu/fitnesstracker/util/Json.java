@@ -1,4 +1,4 @@
-package com.rn5.fitnesstracker.util;
+package rnfive.htfu.fitnesstracker.util;
 
 import android.util.Log;
 
